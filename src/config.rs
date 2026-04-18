@@ -28,6 +28,10 @@ pub struct Env {
     /// WebAuthn relying party origin (the full https URL, or http://localhost for dev)
     #[parenv(default = "http://localhost:3000")]
     pub rp_origin: String,
+    /// Telegram bot token for admin notifications
+    pub telegram_bot_token: String,
+    /// Telegram chat ID to receive notifications
+    pub telegram_chat_id: String,
     /// Address to bind the HTTP server on
     #[parenv(default = "0.0.0.0:3000")]
     pub addr: SocketAddr,

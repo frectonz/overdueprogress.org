@@ -112,6 +112,10 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
 
     if let Err(err) = insert_submission(&state, &values).await {
         tracing::error!(?err, author = %values.author, "insert submission failed");
+        state.telegram.notify(format!(
+            "🔥 Submission DB insert failed for {} ({}): {err}",
+            values.author, values.email
+        ));
         return render_form(
             &state,
             &values,
@@ -119,14 +123,24 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
         );
     }
     tracing::info!(author = %values.author, email = %values.email, "submission stored");
+    state.telegram.notify(format!(
+        "🌱 New submission\nAuthor: {}\nEmail: {}\nTitle: {}\nLink: {}",
+        values.author, values.email, values.title, values.link
+    ));
 
     match send_confirmation(&state, &values).await {
         Ok(_) => tracing::info!(email = %values.email, "confirmation email sent"),
-        Err(err) => tracing::error!(
-            ?err,
-            email = %values.email,
-            "resend send failed (submission already saved)"
-        ),
+        Err(err) => {
+            tracing::error!(
+                ?err,
+                email = %values.email,
+                "resend send failed (submission already saved)"
+            );
+            state.telegram.notify(format!(
+                "⚠️ Confirmation email failed for {}: {err}",
+                values.email
+            ));
+        }
     }
 
     state.view.render("success.html", context! {})

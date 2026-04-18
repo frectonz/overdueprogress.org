@@ -9,11 +9,11 @@ use sqlx::{
 };
 use tower::ServiceExt;
 use wiremock::{
-    matchers::{method, path},
+    matchers::{method, path, path_regex},
     Mock, MockServer, ResponseTemplate,
 };
 
-use crate::{auth::Auth, build_router, resend, turnstile, view::View, AppState};
+use crate::{auth::Auth, build_router, resend, telegram, turnstile, view::View, AppState};
 
 async fn setup_db() -> SqlitePool {
     let opts = SqliteConnectOptions::new()
@@ -47,6 +47,11 @@ async fn setup_state(turnstile_ok: bool) -> (AppState, MockServer) {
         )
         .mount(&mock)
         .await;
+    Mock::given(method("POST"))
+        .and(path_regex(r"^/bot[^/]+/sendMessage$"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(r#"{"ok":true}"#, "application/json"))
+        .mount(&mock)
+        .await;
 
     let http = reqwest::Client::new();
     let state = AppState {
@@ -63,6 +68,12 @@ async fn setup_state(turnstile_ok: bool) -> (AppState, MockServer) {
             "resend-key".into(),
             "Test <test@example.com>".into(),
             format!("{}/resend", mock.uri()),
+        ),
+        telegram: telegram::Client::with_url(
+            http.clone(),
+            "test-token".into(),
+            "test-chat".into(),
+            mock.uri(),
         ),
         auth: Auth::new("localhost", "http://localhost:3000").unwrap(),
     };

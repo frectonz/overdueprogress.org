@@ -3,6 +3,7 @@ mod config;
 mod error;
 mod resend;
 mod submissions;
+mod telegram;
 mod turnstile;
 mod view;
 
@@ -27,6 +28,7 @@ pub struct AppState {
     pub view: View,
     pub turnstile: turnstile::Client,
     pub resend: resend::Client,
+    pub telegram: telegram::Client,
     pub auth: Auth,
 }
 
@@ -62,6 +64,7 @@ async fn main() -> color_eyre::Result<()> {
             env.turnstile_secret_key,
         ),
         resend: resend::Client::new(http.clone(), env.resend_api_key, env.from_email),
+        telegram: telegram::Client::new(http.clone(), env.telegram_bot_token, env.telegram_chat_id),
         auth: Auth::new(&env.rp_id, &env.rp_origin)?,
     };
 
