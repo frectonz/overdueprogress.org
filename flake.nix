@@ -42,11 +42,11 @@
             pkgs.pkg-config
           ];
           buildInputs = [
-            pkgs.rust-bin.stable.latest.default
             pkgs.sqlite
             pkgs.openssl
-            pkgs.rust-analyzer
             pkgs.sqlx-cli
+            pkgs.rust-analyzer
+            pkgs.rust-bin.stable.latest.default
           ];
           shellHook = ''
             export DATABASE_URL="sqlite://$PWD/submissions.db"
