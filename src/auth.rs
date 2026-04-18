@@ -327,6 +327,7 @@ async fn login_page(State(state): State<AppState>) -> Response {
 async fn login_start(State(state): State<AppState>, jar: CookieJar) -> Result<Response, AppError> {
     let passkeys = load_passkeys(&state.db).await?;
     if passkeys.is_empty() {
+        tracing::warn!("login_start: no passkeys registered");
         return Err(AppError::BadRequest("no passkeys registered"));
     }
 
@@ -342,6 +343,7 @@ async fn login_start(State(state): State<AppState>, jar: CookieJar) -> Result<Re
         ChallengeState::Login(auth_state),
     );
     let jar = jar.add(challenge_cookie(id, state.auth.cookies_secure));
+    tracing::info!(passkeys = passkeys.len(), "login challenge issued");
     Ok((jar, Json(rcr)).into_response())
 }
 
@@ -352,10 +354,12 @@ async fn login_finish(
     Json(cred): Json<PublicKeyCredential>,
 ) -> Result<Response, AppError> {
     let Some(id) = jar.get(CHALLENGE_COOKIE).map(|c| c.value().to_string()) else {
+        tracing::warn!("login_finish: missing challenge cookie");
         return Err(AppError::BadRequest("missing challenge"));
     };
     let Some(ChallengeState::Login(auth_state)) = take_challenge(&state.auth.challenges, &id)
     else {
+        tracing::warn!("login_finish: challenge expired or wrong type");
         return Err(AppError::BadRequest("challenge expired"));
     };
 
@@ -366,7 +370,7 @@ async fn login_finish(
     {
         Ok(r) => r,
         Err(err) => {
-            tracing::warn!(?err, "finish_passkey_authentication failed");
+            tracing::warn!(?err, ip = ?client_ip(&headers), "login failed");
             log_auth_event(&state.db, "login_failure", None, &headers).await;
             return Err(AppError::Unauthorized);
         }
@@ -378,6 +382,7 @@ async fn login_finish(
 
     let token = create_session(&state.db).await?;
     log_auth_event(&state.db, "login_success", Some(&cred_id), &headers).await;
+    tracing::info!(credential_id = %cred_id, ip = ?client_ip(&headers), "login success");
 
     let jar = jar
         .remove(removal_cookie(CHALLENGE_COOKIE, state.auth.cookies_secure))
@@ -390,6 +395,7 @@ async fn logout(State(state): State<AppState>, headers: HeaderMap, jar: CookieJa
         delete_session(&state.db, c.value()).await;
     }
     log_auth_event(&state.db, "logout", None, &headers).await;
+    tracing::info!(ip = ?client_ip(&headers), "logout");
     let jar = jar.remove(removal_cookie(SESSION_COOKIE, state.auth.cookies_secure));
     (jar, Redirect::to("/admin/login")).into_response()
 }
@@ -399,6 +405,7 @@ async fn register_page(
     jar: CookieJar,
 ) -> Result<Response, AppError> {
     if !may_register(&state, &jar).await {
+        tracing::warn!("register_page: denied");
         return Err(AppError::BadRequest(
             "Registration is closed. Sign in to add another passkey.",
         ));
@@ -411,10 +418,12 @@ async fn register_start(
     jar: CookieJar,
 ) -> Result<Response, AppError> {
     if !may_register(&state, &jar).await {
+        tracing::warn!("register_start: denied");
         return Err(AppError::BadRequest("registration not allowed"));
     }
 
     let existing = load_passkeys(&state.db).await?;
+    tracing::info!(existing = existing.len(), "register challenge issued");
     let exclude = existing.iter().map(|p| p.cred_id().clone()).collect();
 
     let (ccr, reg_state) = state.auth.webauthn.start_passkey_registration(
@@ -468,6 +477,7 @@ async fn register_finish(
 
     let cred_id = cred_id_hex(passkey.cred_id().as_ref());
     log_auth_event(&state.db, "register", Some(&cred_id), &headers).await;
+    tracing::info!(credential_id = %cred_id, label, ip = ?client_ip(&headers), "passkey registered");
 
     let jar = jar.remove(removal_cookie(CHALLENGE_COOKIE, state.auth.cookies_secure));
     Ok((jar, Json(serde_json::json!({ "ok": true }))).into_response())

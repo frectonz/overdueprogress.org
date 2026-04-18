@@ -26,6 +26,7 @@ impl Client {
     }
 
     pub async fn verify(&self, token: &str) -> Result<bool, TurnstileError> {
+        tracing::debug!(token_len = token.len(), "turnstile verify");
         let req = VerifyRequest {
             secret: &self.secret_key,
             response: token,
@@ -39,7 +40,9 @@ impl Client {
             .error_for_status()?
             .json::<VerifyResponse>()
             .await?;
-        if !res.success {
+        if res.success {
+            tracing::debug!("turnstile verification ok");
+        } else {
             tracing::warn!(?res.error_codes, "turnstile verification failed");
         }
         Ok(res.success)

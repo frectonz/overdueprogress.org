@@ -76,14 +76,24 @@ async fn submit_page(State(state): State<AppState>) -> Response {
 
 async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitForm>) -> Response {
     let values = FormValues::from_submitted(&form);
+    tracing::info!(
+        author = %values.author,
+        email = %values.email,
+        link = %values.link,
+        title_len = values.title.chars().count(),
+        description_len = values.description.chars().count(),
+        "submission received"
+    );
 
     if let Some(msg) = validate(&values) {
+        tracing::warn!(reason = msg, "submission rejected: validation");
         return render_form(&state, &values, Some(msg));
     }
 
     match state.turnstile.verify(&form.turnstile_response).await {
-        Ok(true) => {}
+        Ok(true) => tracing::debug!("turnstile ok"),
         Ok(false) => {
+            tracing::warn!("submission rejected: turnstile challenge failed");
             return render_form(
                 &state,
                 &values,
@@ -101,16 +111,22 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
     }
 
     if let Err(err) = insert_submission(&state, &values).await {
-        tracing::error!(?err, "insert submission failed");
+        tracing::error!(?err, author = %values.author, "insert submission failed");
         return render_form(
             &state,
             &values,
             Some("Something went wrong on our end. Please try again."),
         );
     }
+    tracing::info!(author = %values.author, email = %values.email, "submission stored");
 
-    if let Err(err) = send_confirmation(&state, &values).await {
-        tracing::error!(?err, "resend send failed (submission already saved)");
+    match send_confirmation(&state, &values).await {
+        Ok(_) => tracing::info!(email = %values.email, "confirmation email sent"),
+        Err(err) => tracing::error!(
+            ?err,
+            email = %values.email,
+            "resend send failed (submission already saved)"
+        ),
     }
 
     state.view.render("success.html", context! {})
@@ -217,6 +233,7 @@ struct SubmissionRow {
 
 async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Response, AppError> {
     if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!("admin page accessed without session; redirecting");
         return Ok(redirect);
     }
 
@@ -228,6 +245,7 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
     .fetch_all(&state.db)
     .await?;
 
+    tracing::info!(count = rows.len(), "admin page rendered");
     Ok(state.view.render("admin.html", admin_context(&rows)))
 }
 

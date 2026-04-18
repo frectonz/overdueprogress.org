@@ -11,7 +11,8 @@ use std::net::SocketAddr;
 use axum::{extract::DefaultBodyLimit, Router};
 use axum_embed::ServeEmbed;
 use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
-use tower_http::trace::TraceLayer;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
 use crate::auth::Auth;
 use crate::config::Env;
@@ -32,15 +33,23 @@ async fn main() -> color_eyre::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,tower_http=info".into()),
+                .unwrap_or_else(|_| include_str!("../RUST_LOG.txt").trim().into()),
         )
         .init();
 
     let env = Env::load();
+    tracing::info!(database_url = %env.database_url, "connecting to database");
     let db = connect_db(&env.database_url).await?;
+    tracing::info!("running migrations");
     sqlx::migrate!("./migrations").run(&db).await?;
+    tracing::info!("migrations applied");
 
     let http = reqwest::Client::new();
+    tracing::info!(
+        rp_id = %env.rp_id,
+        rp_origin = %env.rp_origin,
+        "initializing webauthn"
+    );
     let state = AppState {
         db,
         view: View::new(),
@@ -58,7 +67,11 @@ async fn main() -> color_eyre::Result<()> {
         .merge(auth::routes())
         .fallback_service(ServeEmbed::<StaticAssets>::new())
         .layer(DefaultBodyLimit::max(64 * 1024))
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(env.addr).await?;

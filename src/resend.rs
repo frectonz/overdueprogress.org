@@ -26,6 +26,7 @@ impl Client {
     }
 
     pub async fn send(&self, to: &str, subject: &str, text: &str) -> Result<(), ResendError> {
+        tracing::debug!(%to, %subject, "sending email");
         let payload = Email {
             from: &self.from,
             to: [to],
@@ -39,6 +40,7 @@ impl Client {
             .send()
             .await?
             .error_for_status()?;
+        tracing::debug!(%to, "email sent");
         Ok(())
     }
 }
