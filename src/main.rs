@@ -6,6 +6,9 @@ mod submissions;
 mod turnstile;
 mod view;
 
+#[cfg(test)]
+mod tests;
+
 use std::net::SocketAddr;
 
 use axum::{extract::DefaultBodyLimit, Router};
@@ -62,17 +65,7 @@ async fn main() -> color_eyre::Result<()> {
         auth: Auth::new(&env.rp_id, &env.rp_origin)?,
     };
 
-    let app = Router::new()
-        .merge(submissions::routes())
-        .merge(auth::routes())
-        .fallback_service(ServeEmbed::<StaticAssets>::new())
-        .layer(DefaultBodyLimit::max(64 * 1024))
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_response(DefaultOnResponse::new().level(Level::INFO)),
-        )
-        .with_state(state);
+    let app = build_router(state);
 
     let listener = tokio::net::TcpListener::bind(env.addr).await?;
     tracing::info!("listening on {}", listener.local_addr()?);
@@ -90,4 +83,18 @@ async fn connect_db(url: &str) -> Result<SqlitePool, sqlx::Error> {
         .filename(path)
         .create_if_missing(true);
     SqlitePool::connect_with(opts).await
+}
+
+fn build_router(state: AppState) -> Router {
+    Router::new()
+        .merge(submissions::routes())
+        .merge(auth::routes())
+        .fallback_service(ServeEmbed::<StaticAssets>::new())
+        .layer(DefaultBodyLimit::max(64 * 1024))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
+        .with_state(state)
 }

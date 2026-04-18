@@ -14,14 +14,25 @@ pub struct Client {
     http: reqwest::Client,
     api_key: String,
     from: String,
+    send_url: String,
 }
 
 impl Client {
     pub fn new(http: reqwest::Client, api_key: String, from: String) -> Self {
+        Self::with_url(http, api_key, from, SEND_URL.into())
+    }
+
+    pub fn with_url(
+        http: reqwest::Client,
+        api_key: String,
+        from: String,
+        send_url: String,
+    ) -> Self {
         Self {
             http,
             api_key,
             from,
+            send_url,
         }
     }
 
@@ -34,7 +45,7 @@ impl Client {
             text,
         };
         self.http
-            .post(SEND_URL)
+            .post(&self.send_url)
             .bearer_auth(&self.api_key)
             .json(&payload)
             .send()

@@ -14,14 +14,25 @@ pub struct Client {
     http: reqwest::Client,
     pub site_key: String,
     secret_key: String,
+    verify_url: String,
 }
 
 impl Client {
     pub fn new(http: reqwest::Client, site_key: String, secret_key: String) -> Self {
+        Self::with_url(http, site_key, secret_key, VERIFY_URL.into())
+    }
+
+    pub fn with_url(
+        http: reqwest::Client,
+        site_key: String,
+        secret_key: String,
+        verify_url: String,
+    ) -> Self {
         Self {
             http,
             site_key,
             secret_key,
+            verify_url,
         }
     }
 
@@ -33,7 +44,7 @@ impl Client {
         };
         let res = self
             .http
-            .post(VERIFY_URL)
+            .post(&self.verify_url)
             .form(&req)
             .send()
             .await?
