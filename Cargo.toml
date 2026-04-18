@@ -1,11 +1,17 @@
 [package]
 name = "overdueprogress"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+repository = "https://github.com/frectonz/overdueprogress.org"
 
 [profile.release]
 lto = "thin"
 strip = true
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
 
 [dependencies]
 axum = { version = "0.8.9", features = ["macros"] }

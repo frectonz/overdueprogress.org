@@ -45,6 +45,7 @@
             pkgs.sqlite
             pkgs.openssl
             pkgs.sqlx-cli
+            pkgs.cargo-dist
             pkgs.rust-analyzer
             pkgs.rust-bin.stable.latest.default
           ];
