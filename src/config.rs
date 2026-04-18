@@ -32,6 +32,10 @@ pub struct Env {
     pub telegram_bot_token: String,
     /// Telegram chat ID to receive notifications
     pub telegram_chat_id: String,
+    /// Axiom API token (optional; enables remote tracing when set)
+    pub axiom_token: Option<String>,
+    /// Axiom dataset name (required when AXIOM_TOKEN is set)
+    pub axiom_dataset: Option<String>,
     /// Address to bind the HTTP server on
     #[parenv(default = "0.0.0.0:3000")]
     pub addr: SocketAddr,

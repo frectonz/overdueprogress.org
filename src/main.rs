@@ -4,6 +4,7 @@ mod error;
 mod resend;
 mod submissions;
 mod telegram;
+mod telemetry;
 mod turnstile;
 mod view;
 
@@ -35,14 +36,8 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| include_str!("../RUST_LOG.txt").trim().into()),
-        )
-        .init();
-
     let env = Env::load();
+    let _otel = telemetry::init(env.axiom_token.as_deref(), env.axiom_dataset.as_deref())?;
     tracing::info!(database_url = %env.database_url, "connecting to database");
     let db = connect_db(&env.database_url).await?;
     tracing::info!("running migrations");

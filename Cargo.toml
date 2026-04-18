@@ -13,6 +13,9 @@ axum-embed = "0.1.0"
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 color-eyre = "0.6.5"
 minijinja = { version = "2.19.0", features = ["loader"] }
+opentelemetry = "0.31.0"
+opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-client", "http-proto", "trace"] }
+opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
 parenv = "0.1.10"
 rand = "0.10.1"
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "form", "rustls", "http2", "charset"] }
@@ -26,6 +29,7 @@ tokio = { version = "1.52.1", features = ["rt-multi-thread", "macros", "signal",
 tower-http = { version = "0.6.8", features = ["trace"] }
 tower_governor = { version = "0.8.0", default-features = false, features = ["axum"] }
 tracing = "0.1.44"
+tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
 uuid = { version = "1.23.1", features = ["v4", "serde"] }
