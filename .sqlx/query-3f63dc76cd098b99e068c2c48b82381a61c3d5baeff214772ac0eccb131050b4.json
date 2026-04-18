@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE passkeys\n             SET data = ?, last_used_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\n             WHERE credential_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3f63dc76cd098b99e068c2c48b82381a61c3d5baeff214772ac0eccb131050b4"
+}

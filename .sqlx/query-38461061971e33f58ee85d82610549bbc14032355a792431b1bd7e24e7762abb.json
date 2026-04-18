@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO auth_events (event, credential_id, ip, user_agent)\n         VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "38461061971e33f58ee85d82610549bbc14032355a792431b1bd7e24e7762abb"
+}

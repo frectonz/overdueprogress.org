@@ -1,0 +1,7 @@
+.direnv
+/target
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+.env

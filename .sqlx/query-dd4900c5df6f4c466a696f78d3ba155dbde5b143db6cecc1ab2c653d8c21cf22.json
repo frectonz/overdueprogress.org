@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO submissions (title, description, author, email, link) VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "dd4900c5df6f4c466a696f78d3ba155dbde5b143db6cecc1ab2c653d8c21cf22"
+}
