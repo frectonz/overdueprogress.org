@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin sign-in — Overdue Progress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --muted: #6b6b6b;
+        --rule: #e6e6e6;
+        --bg: #fafaf8;
+        --card: #fff;
+        --accent: #0b3d91;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Source Serif 4", Georgia, serif;
+        font-size: 17px;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      main {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 40px 44px;
+        max-width: 420px;
+        width: calc(100% - 48px);
+        text-align: center;
+      }
+      h1 {
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      p {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      button {
+        font-family: inherit;
+        font-size: 16px;
+        padding: 12px 28px;
+        background: var(--ink);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:hover:not(:disabled) {
+        background: #000;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      .status {
+        margin-top: 20px;
+        min-height: 24px;
+        font-size: 14px;
+      }
+      .status.error {
+        color: #8a1f1f;
+      }
+      .status.info {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sign in</h1>
+      <p>Authenticate with your passkey to manage submissions.</p>
+      <button id="signin" type="button">Sign in with passkey</button>
+      <div id="status" class="status"></div>
+    </main>
+    <script>
+      const btn = document.getElementById("signin");
+      const status = document.getElementById("status");
+
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        status.textContent = "Waiting for passkey…";
+        status.className = "status info";
+        try {
+          const startRes = await fetch("/admin/login/start", { method: "POST" });
+          if (!startRes.ok) throw new Error(await startRes.text());
+          const { publicKey } = await startRes.json();
+          const cred = await navigator.credentials.get({
+            publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(publicKey),
+          });
+          if (!cred) throw new Error("No credential returned");
+          const finishRes = await fetch("/admin/login/finish", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(cred.toJSON()),
+          });
+          if (!finishRes.ok) throw new Error(await finishRes.text());
+          window.location.href = "/admin";
+        } catch (err) {
+          status.textContent = "Sign-in failed: " + (err.message || err);
+          status.className = "status error";
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

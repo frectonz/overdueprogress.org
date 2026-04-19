@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Submit an Essay — Overdue Progress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer
+    ></script>
+    <style>
+      body {
+        max-width: 620px;
+        margin: 60px auto;
+        padding: 0 24px;
+        font-family: "Source Serif 4", Georgia, serif;
+        font-size: 18px;
+        line-height: 1.8;
+        color: #222;
+      }
+      h1 {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      a {
+        color: #222;
+      }
+      form {
+        margin-top: 32px;
+      }
+      label {
+        display: block;
+        margin-top: 20px;
+        font-weight: 600;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="url"],
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: 16px;
+        padding: 10px 12px;
+        margin-top: 6px;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        background: #fafafa;
+      }
+      textarea {
+        min-height: 140px;
+        resize: vertical;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #222;
+      }
+      .hint {
+        font-size: 14px;
+        color: #666;
+        font-weight: 400;
+        margin-top: 2px;
+      }
+      .turnstile {
+        margin-top: 28px;
+      }
+      button {
+        margin-top: 28px;
+        font-family: inherit;
+        font-size: 16px;
+        padding: 10px 20px;
+        background: #222;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #000;
+      }
+      .flash {
+        padding: 12px 16px;
+        margin-top: 24px;
+        border-radius: 4px;
+      }
+      .flash.error {
+        background: #fbeaea;
+        color: #8a1f1f;
+        border: 1px solid #e4bcbc;
+      }
+      .sign-off {
+        margin-top: 48px;
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Submit Your Essay</h1>
+
+    <p>
+      Submit a link to your published essay for the
+      <a href="/competition.html">Overdue Progress essay competition</a>. Essays
+      can be hosted anywhere. Like a personal site, Substack, Medium, a Google Doc
+      with public sharing, wherever. We only need a link.
+    </p>
+
+    <p>
+      Submissions close <strong>Sunday, April 26, 2026, 11:59 PM EAT</strong>.
+    </p>
+
+    {% if flash %}
+      <div class="flash error">{{ flash }}</div>
+    {% endif %}
+
+    <form method="post" action="/submit">
+      <label for="title">
+        Essay title
+        <input
+          type="text"
+          id="title"
+          name="title"
+          required
+          maxlength="200"
+          value="{{ values.title }}"
+        />
+      </label>
+
+      <label for="description">
+        Short description
+        <span class="hint">A paragraph or two. What's the essay about?</span>
+        <textarea
+          id="description"
+          name="description"
+          required
+          maxlength="2000"
+        >{{ values.description }}</textarea>
+      </label>
+
+      <label for="author">
+        Author name
+        <input
+          type="text"
+          id="author"
+          name="author"
+          required
+          maxlength="200"
+          value="{{ values.author }}"
+        />
+      </label>
+
+      <label for="email">
+        Contact email
+        <span class="hint">We'll send a confirmation here.</span>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          maxlength="320"
+          value="{{ values.email }}"
+        />
+      </label>
+
+      <label for="link">
+        Link to published essay
+        <span class="hint">Make sure it is publicly accessible.</span>
+        <input
+          type="url"
+          id="link"
+          name="link"
+          required
+          maxlength="2000"
+          placeholder="https://"
+          value="{{ values.link }}"
+        />
+      </label>
+
+      <div
+        class="turnstile cf-turnstile"
+        data-sitekey="{{ turnstile_site_key }}"
+      ></div>
+
+      <button type="submit">Submit essay</button>
+    </form>
+  </body>
+</html>
