@@ -17,6 +17,7 @@ lto = "thin"
 axum = { version = "0.8.9", features = ["macros"] }
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 color-eyre = "0.6.5"
+hex = "0.4.3"
 minijinja = { version = "2.19.0", features = ["loader"] }
 opentelemetry = "0.31.0"
 opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-blocking-client", "reqwest-rustls-webpki-roots", "http-proto", "trace"] }

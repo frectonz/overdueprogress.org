@@ -16,7 +16,7 @@ use std::net::SocketAddr;
 use axum::{
     Router,
     extract::DefaultBodyLimit,
-    http::{StatusCode, Uri, header},
+    http::{HeaderMap, StatusCode, Uri, header},
     response::{IntoResponse, Response},
 };
 use rust_embed::EmbeddedFile;
@@ -102,22 +102,50 @@ fn build_router(state: AppState) -> Router {
         .with_state(state)
 }
 
-async fn static_fallback(uri: Uri) -> Response {
+const STATIC_CACHE_CONTROL: &str = "public, max-age=300, s-maxage=3600, must-revalidate";
+
+async fn static_fallback(headers: HeaderMap, uri: Uri) -> Response {
     let raw = uri.path().trim_start_matches('/');
     let path = if raw.is_empty() { "index.html" } else { raw };
 
     if let Some(file) = StaticAssets::get(path) {
-        return render_embed(file);
+        return render_embed(&headers, file);
     }
     if !path.ends_with(".html")
         && let Some(file) = StaticAssets::get(&format!("{path}.html"))
     {
-        return render_embed(file);
+        return render_embed(&headers, file);
     }
     (StatusCode::NOT_FOUND, "Not Found").into_response()
 }
 
-fn render_embed(file: EmbeddedFile) -> Response {
+fn render_embed(headers: &HeaderMap, file: EmbeddedFile) -> Response {
+    let etag = format!("\"{}\"", hex::encode(file.metadata.sha256_hash()));
+
+    let client_matches = headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v == "*" || v.split(',').any(|tag| tag.trim() == etag));
+
+    if client_matches {
+        return (
+            StatusCode::NOT_MODIFIED,
+            [
+                (header::ETAG, etag),
+                (header::CACHE_CONTROL, STATIC_CACHE_CONTROL.to_string()),
+            ],
+        )
+            .into_response();
+    }
+
     let mime = file.metadata.mimetype().to_owned();
-    ([(header::CONTENT_TYPE, mime)], file.data.into_owned()).into_response()
+    (
+        [
+            (header::CONTENT_TYPE, mime),
+            (header::ETAG, etag),
+            (header::CACHE_CONTROL, STATIC_CACHE_CONTROL.to_string()),
+        ],
+        file.data.into_owned(),
+    )
+        .into_response()
 }
