@@ -12,6 +12,7 @@ mod view;
 mod tests;
 
 use std::net::SocketAddr;
+use std::time::Duration;
 
 use axum::{
     Router,
@@ -20,7 +21,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use rust_embed::EmbeddedFile;
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
+use sqlx::{
+    SqlitePool,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
+};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
@@ -85,8 +89,17 @@ async fn connect_db(url: &str) -> Result<SqlitePool, sqlx::Error> {
     let path = url.trim_start_matches("sqlite://");
     let opts = SqliteConnectOptions::new()
         .filename(path)
-        .create_if_missing(true);
-    SqlitePool::connect_with(opts).await
+        .create_if_missing(true)
+        .journal_mode(SqliteJournalMode::Wal)
+        .synchronous(SqliteSynchronous::Normal)
+        .foreign_keys(true)
+        .busy_timeout(Duration::from_secs(5))
+        .pragma("cache_size", "-20000")
+        .pragma("temp_store", "MEMORY");
+    SqlitePoolOptions::new()
+        .max_connections(8)
+        .connect_with(opts)
+        .await
 }
 
 fn build_router(state: AppState) -> Router {
