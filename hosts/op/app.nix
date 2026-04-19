@@ -27,6 +27,7 @@
   };
 
   services.restic.backups.overdueprogress = {
+    initialize = true;
     paths = [ "/var/lib/overdueprogress/snapshot.db" ];
     repositoryFile = config.sops.secrets.restic_repository.path;
     passwordFile = config.sops.secrets.restic_password.path;
