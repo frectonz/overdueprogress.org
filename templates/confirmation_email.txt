@@ -7,4 +7,4 @@ Link:  {{ link }}
 
 Results will be announced by the end of May 2026.
 
-— Overdue Progress
+Overdue Progress
