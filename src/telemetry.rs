@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use opentelemetry::{global, trace::TracerProvider, KeyValue};
+use opentelemetry::{KeyValue, global, trace::TracerProvider};
 use opentelemetry_otlp::{Protocol, SpanExporter, WithExportConfig, WithHttpConfig};
-use opentelemetry_sdk::{trace::SdkTracerProvider, Resource};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use opentelemetry_sdk::{Resource, trace::SdkTracerProvider};
+use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
 
 const AXIOM_ENDPOINT: &str = "https://api.axiom.co/v1/traces";
 const SERVICE_NAME: &str = "overdueprogress";

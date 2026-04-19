@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use axum::{extract::State, response::Response, routing::get, Form, Router};
+use axum::{Form, Router, extract::State, response::Response, routing::get};
 use axum_extra::extract::cookie::CookieJar;
-use minijinja::{context, Value};
+use minijinja::{Value, context};
 use serde::{Deserialize, Serialize};
 use tower_governor::{
-    governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
 };
 
+use crate::AppState;
 use crate::auth;
 use crate::error::AppError;
-use crate::AppState;
 
 pub fn routes() -> Router<AppState> {
     let submit_limit = GovernorLayer::new(Arc::new(

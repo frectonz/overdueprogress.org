@@ -13,9 +13,9 @@ mod tests;
 
 use std::net::SocketAddr;
 
-use axum::{extract::DefaultBodyLimit, Router};
+use axum::{Router, extract::DefaultBodyLimit};
 use axum_embed::ServeEmbed;
-use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
 

@@ -4,16 +4,16 @@ use axum::{
 };
 use http_body_util::BodyExt;
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
 };
 use tower::ServiceExt;
 use wiremock::{
-    matchers::{method, path, path_regex},
     Mock, MockServer, ResponseTemplate,
+    matchers::{method, path, path_regex},
 };
 
-use crate::{auth::Auth, build_router, resend, telegram, turnstile, view::View, AppState};
+use crate::{AppState, auth::Auth, build_router, resend, telegram, turnstile, view::View};
 
 async fn setup_db() -> SqlitePool {
     let opts = SqliteConnectOptions::new()
@@ -188,9 +188,11 @@ async fn submit_rejects_bad_email() {
         .await
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-    assert!(body_text(res)
-        .await
-        .contains("email address doesn&#x27;t look valid"));
+    assert!(
+        body_text(res)
+            .await
+            .contains("email address doesn&#x27;t look valid")
+    );
 
     let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submissions")
         .fetch_one(&db)

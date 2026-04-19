@@ -3,11 +3,11 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::{
+    Json, Router,
     extract::State,
     http::HeaderMap,
     response::{IntoResponse, Redirect, Response},
     routing::{get, post},
-    Json, Router,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use minijinja::context;
@@ -15,18 +15,18 @@ use rand::Rng;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tower_governor::{
-    governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
 };
 use url::Url;
 use uuid::Uuid;
+use webauthn_rs::WebauthnBuilder;
 use webauthn_rs::prelude::{
     AuthenticationResult, Passkey, PasskeyAuthentication, PasskeyRegistration, PublicKeyCredential,
     RegisterPublicKeyCredential, Webauthn,
 };
-use webauthn_rs::WebauthnBuilder;
 
-use crate::error::AppError;
 use crate::AppState;
+use crate::error::AppError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthInitError {
