@@ -19,7 +19,7 @@ axum-extra = { version = "0.12.6", features = ["cookie"] }
 color-eyre = "0.6.5"
 minijinja = { version = "2.19.0", features = ["loader"] }
 opentelemetry = "0.31.0"
-opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-blocking-client", "http-proto", "trace"] }
+opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-blocking-client", "reqwest-rustls-webpki-roots", "http-proto", "trace"] }
 opentelemetry_sdk = "0.31.0"
 parenv = "0.1.10"
 rand = "0.10.1"
