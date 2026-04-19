@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use opentelemetry::{KeyValue, global, trace::TracerProvider};
+use opentelemetry::{KeyValue, trace::TracerProvider};
 use opentelemetry_otlp::{Protocol, SpanExporter, WithExportConfig, WithHttpConfig};
 use opentelemetry_sdk::{Resource, trace::SdkTracerProvider};
 use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
@@ -33,7 +33,6 @@ pub fn init(
             let provider = build_axiom_provider(token, dataset)?;
             let tracer = provider.tracer(SERVICE_NAME);
             let layer = tracing_opentelemetry::layer().with_tracer(tracer);
-            global::set_tracer_provider(provider.clone());
             (Some(layer), Some(OtelHandle { provider }), true)
         }
         _ => (None, None, false),

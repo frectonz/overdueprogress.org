@@ -15,17 +15,16 @@ lto = "thin"
 
 [dependencies]
 axum = { version = "0.8.9", features = ["macros"] }
-axum-embed = "0.1.0"
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 color-eyre = "0.6.5"
 minijinja = { version = "2.19.0", features = ["loader"] }
 opentelemetry = "0.31.0"
-opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-client", "http-proto", "trace"] }
-opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.31.1", default-features = false, features = ["reqwest-blocking-client", "http-proto", "trace"] }
+opentelemetry_sdk = "0.31.0"
 parenv = "0.1.10"
 rand = "0.10.1"
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "form", "rustls", "http2", "charset"] }
-rust-embed = "8.11.0"
+rust-embed = { version = "8.11.0", features = ["mime-guess"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio-rustls", "sqlite", "macros", "migrate"] }

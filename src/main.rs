@@ -13,8 +13,13 @@ mod tests;
 
 use std::net::SocketAddr;
 
-use axum::{Router, extract::DefaultBodyLimit};
-use axum_embed::ServeEmbed;
+use axum::{
+    Router,
+    extract::DefaultBodyLimit,
+    http::{StatusCode, Uri, header},
+    response::{IntoResponse, Response},
+};
+use rust_embed::EmbeddedFile;
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
@@ -87,7 +92,7 @@ fn build_router(state: AppState) -> Router {
     Router::new()
         .merge(submissions::routes())
         .merge(auth::routes())
-        .fallback_service(ServeEmbed::<StaticAssets>::new())
+        .fallback(static_fallback)
         .layer(DefaultBodyLimit::max(64 * 1024))
         .layer(
             TraceLayer::new_for_http()
@@ -95,4 +100,24 @@ fn build_router(state: AppState) -> Router {
                 .on_response(DefaultOnResponse::new().level(Level::INFO)),
         )
         .with_state(state)
+}
+
+async fn static_fallback(uri: Uri) -> Response {
+    let raw = uri.path().trim_start_matches('/');
+    let path = if raw.is_empty() { "index.html" } else { raw };
+
+    if let Some(file) = StaticAssets::get(path) {
+        return render_embed(file);
+    }
+    if !path.ends_with(".html")
+        && let Some(file) = StaticAssets::get(&format!("{path}.html"))
+    {
+        return render_embed(file);
+    }
+    (StatusCode::NOT_FOUND, "Not Found").into_response()
+}
+
+fn render_embed(file: EmbeddedFile) -> Response {
+    let mime = file.metadata.mimetype().to_owned();
+    ([(header::CONTENT_TYPE, mime)], file.data.into_owned()).into_response()
 }
