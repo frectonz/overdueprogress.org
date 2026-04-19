@@ -47,11 +47,12 @@
 
   systemd.network = {
     enable = true;
-    networks."10-eth0" = {
-      matchConfig.Name = "eth0";
+    wait-online.anyInterface = true;
+    networks."10-wan" = {
+      matchConfig.PermanentMACAddress = "ee:e8:d4:b9:80:b7";
       address = [
         "76.13.146.117/24"
-        "2a02:4780:41:66::1/64"
+        "2a02:4780:41:66::1/48"
       ];
       routes = [
         { Gateway = "76.13.146.254"; }
@@ -62,6 +63,11 @@
         "1.1.1.1"
         "8.8.4.4"
       ];
+      networkConfig = {
+        IPv6AcceptRA = false;
+        DNSDefaultRoute = true;
+      };
+      linkConfig.RequiredForOnline = "routable";
     };
   };
 
