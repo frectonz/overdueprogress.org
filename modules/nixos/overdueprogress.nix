@@ -1,8 +1,8 @@
+{ flake, ... }:
 {
   lib,
   config,
   pkgs,
-  flake,
   ...
 }:
 let
