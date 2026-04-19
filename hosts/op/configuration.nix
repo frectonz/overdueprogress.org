@@ -41,6 +41,17 @@
 
   sops.defaultSopsFile = ./secrets.yaml;
 
+  services.cloud-init = {
+    enable = true;
+    network.enable = true;
+    settings = {
+      ssh_deletekeys = false;
+      ssh_genkeytypes = [ ];
+    };
+  };
+  networking.useDHCP = false;
+  services.resolved.enable = true;
+
   networking.firewall.allowedTCPPorts = [
     22
     80

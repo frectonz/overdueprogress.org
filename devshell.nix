@@ -69,6 +69,7 @@ let
       chmod 600 "$tmp/etc/ssh/ssh_host_ed25519_key"
       nixos-anywhere \
         --flake .#op \
+        --build-on-remote \
         --extra-files "$tmp" \
         ${target} "$@"
     '';
