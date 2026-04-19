@@ -41,16 +41,29 @@
 
   sops.defaultSopsFile = ./secrets.yaml;
 
-  services.cloud-init = {
-    enable = true;
-    network.enable = true;
-    settings = {
-      ssh_deletekeys = false;
-      ssh_genkeytypes = [ ];
-    };
-  };
+  services.cloud-init.enable = false;
   networking.useDHCP = false;
   services.resolved.enable = true;
+
+  systemd.network = {
+    enable = true;
+    networks."10-eth0" = {
+      matchConfig.Name = "eth0";
+      address = [
+        "76.13.146.117/24"
+        "2a02:4780:41:66::1/64"
+      ];
+      routes = [
+        { Gateway = "76.13.146.254"; }
+        { Gateway = "2a02:4780:41::1"; }
+      ];
+      dns = [
+        "153.92.2.6"
+        "1.1.1.1"
+        "8.8.4.4"
+      ];
+    };
+  };
 
   networking.firewall.allowedTCPPorts = [
     22
