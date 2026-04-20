@@ -19,12 +19,12 @@ let
       || rel == "RUST_LOG.txt"
       || rel == "src"
       || rel == "migrations"
-      || rel == "templates"
+      || rel == "views"
       || rel == "static"
       || rel == ".sqlx"
       || pkgs.lib.hasPrefix "src/" rel
       || pkgs.lib.hasPrefix "migrations/" rel
-      || pkgs.lib.hasPrefix "templates/" rel
+      || pkgs.lib.hasPrefix "views/" rel
       || pkgs.lib.hasPrefix "static/" rel
       || pkgs.lib.hasPrefix ".sqlx/" rel;
   };

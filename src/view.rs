@@ -13,7 +13,7 @@ use thiserror::Error;
 pub struct StaticAssets;
 
 #[derive(Embed)]
-#[folder = "templates/"]
+#[folder = "views/"]
 struct Templates;
 
 #[derive(Clone)]
