@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deadline — Overdue Progress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        max-width: 620px;
+        margin: 60px auto;
+        padding: 0 24px;
+        font-family: "Source Serif 4", Georgia, serif;
+        font-size: 18px;
+        line-height: 1.8;
+        color: #222;
+      }
+      h1 {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      a {
+        color: #222;
+      }
+      .countdown {
+        margin-top: 32px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        text-align: center;
+      }
+      .countdown .cell {
+        padding: 16px 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+      }
+      .countdown .num {
+        font-size: 40px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+      }
+      .countdown .label {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #666;
+        margin-top: 4px;
+      }
+      .closed {
+        margin-top: 32px;
+        padding: 16px 20px;
+        background: #fbeaea;
+        color: #8a1f1f;
+        border: 1px solid #e4bcbc;
+        border-radius: 6px;
+        display: none;
+      }
+      .stat {
+        margin-top: 40px;
+        padding: 20px 24px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+      }
+      .stat .num {
+        font-size: 40px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+      }
+      .stat .label {
+        font-size: 14px;
+        color: #666;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Deadline</h1>
+
+    <p>
+      Submissions for the
+      <a href="/competition.html">Overdue Progress essay competition</a> close
+      <strong>Sunday, April 26, 2026, 11:59 PM EAT</strong>.
+    </p>
+
+    <div
+      class="countdown"
+      id="countdown"
+      data-deadline="2026-04-26T20:59:00Z"
+      aria-live="polite"
+    >
+      <div class="cell"><div class="num" id="cd-days">—</div><div class="label">Days</div></div>
+      <div class="cell"><div class="num" id="cd-hours">—</div><div class="label">Hours</div></div>
+      <div class="cell"><div class="num" id="cd-minutes">—</div><div class="label">Minutes</div></div>
+      <div class="cell"><div class="num" id="cd-seconds">—</div><div class="label">Seconds</div></div>
+    </div>
+
+    <div class="closed" id="closed">Submissions are closed.</div>
+
+    <div class="stat">
+      <div class="num">{{ submission_count }}</div>
+      <div class="label">
+        {% if submission_count == 1 %}essay submitted so far{% else %}essays submitted so far{% endif %}
+      </div>
+    </div>
+
+    <p style="margin-top: 32px;">
+      <a href="/submit">Submit your essay</a>
+    </p>
+
+    <script>
+      (function () {
+        const el = document.getElementById("countdown");
+        const closed = document.getElementById("closed");
+        const deadline = new Date(el.dataset.deadline).getTime();
+        const days = document.getElementById("cd-days");
+        const hours = document.getElementById("cd-hours");
+        const minutes = document.getElementById("cd-minutes");
+        const seconds = document.getElementById("cd-seconds");
+
+        function pad(n) {
+          return n < 10 ? "0" + n : "" + n;
+        }
+
+        function tick() {
+          const diff = deadline - Date.now();
+          if (diff <= 0) {
+            days.textContent = "0";
+            hours.textContent = "00";
+            minutes.textContent = "00";
+            seconds.textContent = "00";
+            closed.style.display = "block";
+            return false;
+          }
+          const s = Math.floor(diff / 1000);
+          days.textContent = Math.floor(s / 86400);
+          hours.textContent = pad(Math.floor((s % 86400) / 3600));
+          minutes.textContent = pad(Math.floor((s % 3600) / 60));
+          seconds.textContent = pad(s % 60);
+          return true;
+        }
+
+        if (tick()) {
+          setInterval(tick, 1000);
+        }
+      })();
+    </script>
+  </body>
+</html>

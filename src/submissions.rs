@@ -41,11 +41,21 @@ pub fn routes() -> Router<AppState> {
             "/submit",
             get(submit_page).post(submit_handler).layer(submit_limit),
         )
+        .route("/deadline", get(deadline_page))
         .route("/admin", get(admin_page))
         .route(
             "/admin/submissions/{id}/delete",
             post(delete_submission).layer(delete_limit),
         )
+}
+
+async fn deadline_page(State(state): State<AppState>) -> Result<Response, AppError> {
+    let count = sqlx::query_scalar!("SELECT COUNT(*) FROM submissions")
+        .fetch_one(&state.db)
+        .await?;
+    Ok(state
+        .view
+        .render("deadline.html", context! { submission_count => count }))
 }
 
 #[derive(Clone, Default, Serialize)]
