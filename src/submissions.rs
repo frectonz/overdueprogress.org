@@ -1,6 +1,11 @@
 use std::sync::Arc;
 
-use axum::{Form, Router, extract::State, response::Response, routing::get};
+use axum::{
+    Form, Router,
+    extract::{Path, State},
+    response::{IntoResponse, Redirect, Response},
+    routing::{get, post},
+};
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::{Value, context};
 use serde::{Deserialize, Serialize};
@@ -28,6 +33,7 @@ pub fn routes() -> Router<AppState> {
             get(submit_page).post(submit_handler).layer(submit_limit),
         )
         .route("/admin", get(admin_page))
+        .route("/admin/submissions/{id}/delete", post(delete_submission))
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -265,6 +271,28 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
 
 fn admin_context(rows: &[SubmissionRow]) -> Value {
     context! { rows => rows }
+}
+
+async fn delete_submission(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!(id, "delete submission denied: no session");
+        return Ok(redirect);
+    }
+
+    let result = sqlx::query!("DELETE FROM submissions WHERE id = ?", id)
+        .execute(&state.db)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        tracing::warn!(id, "delete submission: no such row");
+    } else {
+        tracing::info!(id, "submission deleted");
+    }
+    Ok(Redirect::to("/admin").into_response())
 }
 
 #[cfg(test)]

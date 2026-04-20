@@ -167,6 +167,27 @@
       .link-row a.essay-link:hover {
         text-decoration-color: var(--accent);
       }
+      .actions {
+        margin-left: auto;
+      }
+      .actions form {
+        margin: 0;
+      }
+      .actions button {
+        font-family: inherit;
+        font-size: 13px;
+        color: #a33;
+        background: transparent;
+        border: 1px solid var(--rule);
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .actions button:hover {
+        color: #fff;
+        background: #a33;
+        border-color: #a33;
+      }
     </style>
   </head>
   <body>
@@ -209,6 +230,15 @@
                   title="{{ r.link }}"
                   >{{ r.link }}</a
                 >
+              </span>
+              <span class="actions">
+                <form
+                  method="post"
+                  action="/admin/submissions/{{ r.id }}/delete"
+                  onsubmit="return confirm('Delete this submission? This cannot be undone.');"
+                >
+                  <button type="submit">Delete</button>
+                </form>
               </span>
             </div>
           </article>
