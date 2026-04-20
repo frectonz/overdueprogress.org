@@ -22,6 +22,7 @@ let
     runtimeInputs = [ pkgs.nixos-rebuild ];
     text = ''
       nixos-rebuild \
+        --no-reexec \
         --flake .#op \
         --target-host ${target} \
         --build-host ${target} \
