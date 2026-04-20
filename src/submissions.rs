@@ -27,13 +27,25 @@ pub fn routes() -> Router<AppState> {
             .expect("valid submit rate limiter"),
     ));
 
+    let delete_limit = GovernorLayer::new(Arc::new(
+        GovernorConfigBuilder::default()
+            .key_extractor(SmartIpKeyExtractor)
+            .per_second(2)
+            .burst_size(5)
+            .finish()
+            .expect("valid delete rate limiter"),
+    ));
+
     Router::new()
         .route(
             "/submit",
             get(submit_page).post(submit_handler).layer(submit_limit),
         )
         .route("/admin", get(admin_page))
-        .route("/admin/submissions/{id}/delete", post(delete_submission))
+        .route(
+            "/admin/submissions/{id}/delete",
+            post(delete_submission).layer(delete_limit),
+        )
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -257,6 +269,8 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
         return Ok(redirect);
     }
 
+    let csrf_token = auth::current_csrf_token(&state.db, &jar).await;
+
     let rows = sqlx::query_as!(
         SubmissionRow,
         "SELECT id, title, description, author, email, link, created_at
@@ -266,21 +280,38 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
     .await?;
 
     tracing::info!(count = rows.len(), "admin page rendered");
-    Ok(state.view.render("admin.html", admin_context(&rows)))
+    Ok(state
+        .view
+        .render("admin.html", admin_context(&rows, csrf_token.as_deref())))
 }
 
-fn admin_context(rows: &[SubmissionRow]) -> Value {
-    context! { rows => rows }
+fn admin_context(rows: &[SubmissionRow], csrf_token: Option<&str>) -> Value {
+    context! { rows => rows, csrf_token => csrf_token }
+}
+
+#[derive(Deserialize)]
+struct DeleteForm {
+    csrf_token: String,
 }
 
 async fn delete_submission(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(id): Path<i64>,
+    Form(form): Form<DeleteForm>,
 ) -> Result<Response, AppError> {
     if let Some(redirect) = auth::require_session(&state, &jar).await {
         tracing::debug!(id, "delete submission denied: no session");
         return Ok(redirect);
+    }
+
+    let Some(expected) = auth::current_csrf_token(&state.db, &jar).await else {
+        tracing::warn!(id, "delete submission denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if form.csrf_token != expected {
+        tracing::warn!(id, "delete submission denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
     }
 
     let result = sqlx::query!("DELETE FROM submissions WHERE id = ?", id)

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT csrf_token FROM sessions\n         WHERE token = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+  "describe": {
+    "columns": [
+      {
+        "name": "csrf_token",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "91b720d53a9f8afc2dd6e60a9a6ade32c823209f09a579cfbc32d4b6f7b3364d"
+}

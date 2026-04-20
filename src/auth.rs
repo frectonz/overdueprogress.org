@@ -119,14 +119,30 @@ async fn current_session(db: &SqlitePool, jar: &CookieJar) -> Option<String> {
     .flatten()
 }
 
+pub async fn current_csrf_token(db: &SqlitePool, jar: &CookieJar) -> Option<String> {
+    let token = jar.get(SESSION_COOKIE)?.value().to_string();
+    sqlx::query_scalar!(
+        "SELECT csrf_token FROM sessions
+         WHERE token = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+        token,
+    )
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .flatten()
+}
+
 async fn create_session(db: &SqlitePool) -> Result<String, AppError> {
     let token = random_token();
+    let csrf = random_token();
     let ttl = format!("+{SESSION_TTL_DAYS} days");
     sqlx::query!(
-        "INSERT INTO sessions (token, expires_at)
-         VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?))",
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?), ?)",
         token,
         ttl,
+        csrf,
     )
     .execute(db)
     .await?;

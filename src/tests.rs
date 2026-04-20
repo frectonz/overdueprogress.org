@@ -288,6 +288,90 @@ async fn register_forbidden_when_passkey_exists() {
 }
 
 #[tokio::test]
+async fn delete_rejects_bad_csrf_token() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('t', 'd', 'a', 'a@b.co', 'https://a.b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/delete")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[("csrf_token", "wrong")]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submissions")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(count, 1, "row should still exist after rejected delete");
+}
+
+#[tokio::test]
+async fn delete_succeeds_with_valid_csrf_token() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('t', 'd', 'a', 'a@b.co', 'https://a.b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/delete")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[("csrf_token", "good-csrf")]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submissions")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[tokio::test]
 async fn admin_rejects_unknown_session_cookie() {
     let (state, _mock) = setup_state(true).await;
     sqlx::query("INSERT INTO passkeys (credential_id, data, label) VALUES ('x', '{}', 'seed')")
