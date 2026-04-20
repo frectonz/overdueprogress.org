@@ -36,38 +36,33 @@ impl Client {
         }
     }
 
+    pub async fn send(&self, text: impl Into<String>) -> Result<(), TelegramError> {
+        let url = format!("{}/bot{}/sendMessage", self.api_base, self.bot_token);
+        let payload = SendMessage {
+            chat_id: &self.chat_id,
+            text: &text.into(),
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
+        };
+        self.http
+            .post(&url)
+            .json(&payload)
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(())
+    }
+
     /// Fire-and-forget notification; errors are logged, never propagated.
     pub fn notify(&self, text: impl Into<String>) {
-        let http = self.http.clone();
-        let url = format!("{}/bot{}/sendMessage", self.api_base, self.bot_token);
-        let chat_id = self.chat_id.clone();
+        let this = self.clone();
         let text = text.into();
         tokio::spawn(async move {
-            if let Err(err) = send(&http, &url, &chat_id, &text).await {
+            if let Err(err) = this.send(text).await {
                 tracing::error!(?err, "telegram notify failed");
             }
         });
     }
-}
-
-async fn send(
-    http: &reqwest::Client,
-    url: &str,
-    chat_id: &str,
-    text: &str,
-) -> Result<(), TelegramError> {
-    let payload = SendMessage {
-        chat_id,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-    };
-    http.post(url)
-        .json(&payload)
-        .send()
-        .await?
-        .error_for_status()?;
-    Ok(())
 }
 
 #[derive(Serialize)]

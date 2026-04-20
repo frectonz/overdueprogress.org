@@ -10,6 +10,7 @@
     flake.nixosModules.overdueprogress
     ./disko.nix
     ./app.nix
+    ./alerts.nix
     ./shell.nix
     (modulesPath + "/profiles/qemu-guest.nix")
   ];

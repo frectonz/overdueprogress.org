@@ -3,10 +3,11 @@ mod config;
 mod error;
 mod resend;
 mod submissions;
-mod telegram;
 mod telemetry;
 mod turnstile;
 mod view;
+
+use overdueprogress::telegram;
 
 #[cfg(test)]
 mod tests;
