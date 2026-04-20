@@ -20,6 +20,7 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri, header},
     response::{IntoResponse, Response},
 };
+use minijinja::Value;
 use rust_embed::EmbeddedFile;
 use sqlx::{
     SqlitePool,
@@ -41,6 +42,15 @@ pub struct AppState {
     pub resend: resend::Client,
     pub telegram: telegram::Client,
     pub auth: Auth,
+}
+
+impl AppState {
+    pub fn notify_telegram(&self, template: &str, ctx: Value) {
+        match self.view.render_to_string(template, ctx) {
+            Ok(text) => self.telegram.notify(text),
+            Err(err) => tracing::error!(?err, template, "telegram template render failed"),
+        }
+    }
 }
 
 #[tokio::main]

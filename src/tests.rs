@@ -172,6 +172,41 @@ async fn submit_happy_path_stores_row() {
 }
 
 #[tokio::test]
+async fn submit_sends_html_telegram_notification() {
+    let (state, mock) = setup_state(true).await;
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(submit_request(
+            "My essay",
+            "A thoughtful description of progress.",
+            "Alice <script>",
+            "alice@example.com",
+            "https://example.com/essay",
+        ))
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // Telegram is fire-and-forget; let the spawned task reach the mock.
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+    let requests = mock.received_requests().await.unwrap();
+    let tg = requests
+        .iter()
+        .find(|r| r.url.path().ends_with("/sendMessage"))
+        .expect("telegram sendMessage was called");
+    let body: serde_json::Value = serde_json::from_slice(&tg.body).unwrap();
+    assert_eq!(body["parse_mode"], "HTML");
+    let text = body["text"].as_str().unwrap();
+    assert!(text.contains("<b>"), "expected bold tag in: {text}");
+    assert!(
+        text.contains("Alice &lt;script&gt;"),
+        "expected escaped author in: {text}"
+    );
+}
+
+#[tokio::test]
 async fn submit_rejects_bad_email() {
     let (state, _mock) = setup_state(true).await;
     let db = state.db.clone();

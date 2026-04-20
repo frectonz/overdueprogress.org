@@ -130,10 +130,14 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
 
     if let Err(err) = insert_submission(&state, &values).await {
         tracing::error!(?err, author = %values.author, "insert submission failed");
-        state.telegram.notify(format!(
-            "🔥 Submission DB insert failed for {} ({}): {err}",
-            values.author, values.email
-        ));
+        state.notify_telegram(
+            "telegram/submission_insert_failed.tg.html",
+            context! {
+                author => &values.author,
+                email => &values.email,
+                error => err.to_string(),
+            },
+        );
         return render_form(
             &state,
             &values,
@@ -141,10 +145,15 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
         );
     }
     tracing::info!(author = %values.author, email = %values.email, "submission stored");
-    state.telegram.notify(format!(
-        "🌱 New submission\nAuthor: {}\nEmail: {}\nTitle: {}\nLink: {}",
-        values.author, values.email, values.title, values.link
-    ));
+    state.notify_telegram(
+        "telegram/submission_new.tg.html",
+        context! {
+            author => &values.author,
+            email => &values.email,
+            title => &values.title,
+            link => &values.link,
+        },
+    );
 
     match send_confirmation(&state, &values).await {
         Ok(_) => tracing::info!(email = %values.email, "confirmation email sent"),
@@ -154,10 +163,13 @@ async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitFo
                 email = %values.email,
                 "resend send failed (submission already saved)"
             );
-            state.telegram.notify(format!(
-                "⚠️ Confirmation email failed for {}: {err}",
-                values.email
-            ));
+            state.notify_telegram(
+                "telegram/confirmation_email_failed.tg.html",
+                context! {
+                    email => &values.email,
+                    error => err.to_string(),
+                },
+            );
         }
     }
 

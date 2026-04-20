@@ -59,6 +59,7 @@ async fn send(
     let payload = SendMessage {
         chat_id,
         text,
+        parse_mode: "HTML",
         disable_web_page_preview: true,
     };
     http.post(url)
@@ -73,5 +74,6 @@ async fn send(
 struct SendMessage<'a> {
     chat_id: &'a str,
     text: &'a str,
+    parse_mode: &'static str,
     disable_web_page_preview: bool,
 }

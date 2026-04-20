@@ -388,10 +388,12 @@ async fn login_finish(
         Err(err) => {
             tracing::warn!(?err, ip = ?client_ip(&headers), "login failed");
             log_auth_event(&state.db, "login_failure", None, &headers).await;
-            state.telegram.notify(format!(
-                "⚠️ Admin login failed (ip: {})",
-                client_ip(&headers).as_deref().unwrap_or("unknown")
-            ));
+            state.notify_telegram(
+                "telegram/admin_login_failed.tg.html",
+                context! {
+                    ip => client_ip(&headers).as_deref().unwrap_or("unknown"),
+                },
+            );
             return Err(AppError::Unauthorized);
         }
     };
@@ -403,10 +405,12 @@ async fn login_finish(
     let token = create_session(&state.db).await?;
     log_auth_event(&state.db, "login_success", Some(&cred_id), &headers).await;
     tracing::info!(credential_id = %cred_id, ip = ?client_ip(&headers), "login success");
-    state.telegram.notify(format!(
-        "🔐 Admin login (ip: {})",
-        client_ip(&headers).as_deref().unwrap_or("unknown")
-    ));
+    state.notify_telegram(
+        "telegram/admin_login_success.tg.html",
+        context! {
+            ip => client_ip(&headers).as_deref().unwrap_or("unknown"),
+        },
+    );
 
     let jar = jar
         .remove(removal_cookie(CHALLENGE_COOKIE, state.auth.cookies_secure))
@@ -502,11 +506,13 @@ async fn register_finish(
     let cred_id = cred_id_hex(passkey.cred_id().as_ref());
     log_auth_event(&state.db, "register", Some(&cred_id), &headers).await;
     tracing::info!(credential_id = %cred_id, label, ip = ?client_ip(&headers), "passkey registered");
-    state.telegram.notify(format!(
-        "✨ New passkey registered\nLabel: {}\nIP: {}",
-        label,
-        client_ip(&headers).as_deref().unwrap_or("unknown")
-    ));
+    state.notify_telegram(
+        "telegram/passkey_registered.tg.html",
+        context! {
+            label => label,
+            ip => client_ip(&headers).as_deref().unwrap_or("unknown"),
+        },
+    );
 
     let jar = jar.remove(removal_cookie(CHALLENGE_COOKIE, state.auth.cookies_secure));
     Ok((jar, Json(serde_json::json!({ "ok": true }))).into_response())
