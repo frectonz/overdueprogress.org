@@ -9,6 +9,7 @@ use axum::{
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::{Value, context};
 use serde::{Deserialize, Serialize};
+use time::{OffsetDateTime, macros::datetime};
 use tower_governor::{
     GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
 };
@@ -16,6 +17,8 @@ use tower_governor::{
 use crate::AppState;
 use crate::auth;
 use crate::error::AppError;
+
+pub const DEADLINE: OffsetDateTime = datetime!(2026-04-26 20:59:00 UTC);
 
 pub fn routes() -> Router<AppState> {
     let submit_limit = GovernorLayer::new(Arc::new(
@@ -53,9 +56,13 @@ async fn deadline_page(State(state): State<AppState>) -> Result<Response, AppErr
     let count = sqlx::query_scalar!("SELECT COUNT(*) FROM submissions")
         .fetch_one(&state.db)
         .await?;
-    Ok(state
-        .view
-        .render("deadline.html", context! { submission_count => count }))
+    Ok(state.view.render(
+        "deadline.html",
+        context! {
+            submission_count => count,
+            closed => state.submissions_closed(),
+        },
+    ))
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -103,6 +110,15 @@ async fn submit_page(State(state): State<AppState>) -> Response {
 }
 
 async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitForm>) -> Response {
+    if state.submissions_closed() {
+        tracing::warn!("submission rejected: deadline passed");
+        return render_form(
+            &state,
+            &FormValues::from_submitted(&form),
+            Some("Submissions are closed."),
+        );
+    }
+
     let values = FormValues::from_submitted(&form);
     tracing::info!(
         author = %values.author,
@@ -193,6 +209,7 @@ fn render_form(state: &AppState, values: &FormValues, flash: Option<&str>) -> Re
             turnstile_site_key => &state.turnstile.site_key,
             values => values,
             flash => flash,
+            closed => state.submissions_closed(),
         },
     )
 }

@@ -60,7 +60,6 @@
         color: #8a1f1f;
         border: 1px solid #e4bcbc;
         border-radius: 6px;
-        display: none;
       }
       .stat {
         margin-top: 40px;
@@ -87,71 +86,75 @@
 
     <p>
       Submissions for the
-      <a href="/competition.html">Overdue Progress essay competition</a> close
+      <a href="/competition.html">Overdue Progress essay competition</a>
+      {% if closed %}closed{% else %}close{% endif %}
       <strong>Sunday, April 26, 2026, 11:59 PM EAT</strong>.
     </p>
 
-    <div
-      class="countdown"
-      id="countdown"
-      data-deadline="2026-04-26T20:59:00Z"
-      aria-live="polite"
-    >
-      <div class="cell"><div class="num" id="cd-days">—</div><div class="label">Days</div></div>
-      <div class="cell"><div class="num" id="cd-hours">—</div><div class="label">Hours</div></div>
-      <div class="cell"><div class="num" id="cd-minutes">—</div><div class="label">Minutes</div></div>
-      <div class="cell"><div class="num" id="cd-seconds">—</div><div class="label">Seconds</div></div>
-    </div>
-
-    <div class="closed" id="closed">Submissions are closed.</div>
+    {% if closed %}
+      <div class="closed">Submissions are closed.</div>
+    {% else %}
+      <div
+        class="countdown"
+        id="countdown"
+        data-deadline="2026-04-26T20:59:00Z"
+        aria-live="polite"
+      >
+        <div class="cell"><div class="num" id="cd-days">—</div><div class="label">Days</div></div>
+        <div class="cell"><div class="num" id="cd-hours">—</div><div class="label">Hours</div></div>
+        <div class="cell"><div class="num" id="cd-minutes">—</div><div class="label">Minutes</div></div>
+        <div class="cell"><div class="num" id="cd-seconds">—</div><div class="label">Seconds</div></div>
+      </div>
+    {% endif %}
 
     <div class="stat">
       <div class="num">{{ submission_count }}</div>
       <div class="label">
-        {% if submission_count == 1 %}essay submitted so far{% else %}essays submitted so far{% endif %}
+        {% if submission_count == 1 %}
+          essay submitted{% if not closed %} so far{% endif %}
+        {% else %}
+          essays submitted{% if not closed %} so far{% endif %}
+        {% endif %}
       </div>
     </div>
 
-    <p style="margin-top: 32px;">
-      <a href="/submit">Submit your essay</a>
-    </p>
+    {% if not closed %}
+      <p style="margin-top: 32px;">
+        <a href="/submit">Submit your essay</a>
+      </p>
 
-    <script>
-      (function () {
-        const el = document.getElementById("countdown");
-        const closed = document.getElementById("closed");
-        const deadline = new Date(el.dataset.deadline).getTime();
-        const days = document.getElementById("cd-days");
-        const hours = document.getElementById("cd-hours");
-        const minutes = document.getElementById("cd-minutes");
-        const seconds = document.getElementById("cd-seconds");
+      <script>
+        (function () {
+          const el = document.getElementById("countdown");
+          const deadline = new Date(el.dataset.deadline).getTime();
+          const days = document.getElementById("cd-days");
+          const hours = document.getElementById("cd-hours");
+          const minutes = document.getElementById("cd-minutes");
+          const seconds = document.getElementById("cd-seconds");
 
-        function pad(n) {
-          return n < 10 ? "0" + n : "" + n;
-        }
-
-        function tick() {
-          const diff = deadline - Date.now();
-          if (diff <= 0) {
-            days.textContent = "0";
-            hours.textContent = "00";
-            minutes.textContent = "00";
-            seconds.textContent = "00";
-            closed.style.display = "block";
-            return false;
+          function pad(n) {
+            return n < 10 ? "0" + n : "" + n;
           }
-          const s = Math.floor(diff / 1000);
-          days.textContent = Math.floor(s / 86400);
-          hours.textContent = pad(Math.floor((s % 86400) / 3600));
-          minutes.textContent = pad(Math.floor((s % 3600) / 60));
-          seconds.textContent = pad(s % 60);
-          return true;
-        }
 
-        if (tick()) {
-          setInterval(tick, 1000);
-        }
-      })();
-    </script>
+          function tick() {
+            const diff = deadline - Date.now();
+            if (diff <= 0) {
+              window.location.reload();
+              return false;
+            }
+            const s = Math.floor(diff / 1000);
+            days.textContent = Math.floor(s / 86400);
+            hours.textContent = pad(Math.floor((s % 86400) / 3600));
+            minutes.textContent = pad(Math.floor((s % 3600) / 60));
+            seconds.textContent = pad(s % 60);
+            return true;
+          }
+
+          if (tick()) {
+            setInterval(tick, 1000);
+          }
+        })();
+      </script>
+    {% endif %}
   </body>
 </html>

@@ -27,6 +27,7 @@ use sqlx::{
     SqlitePool,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
 };
+use time::OffsetDateTime;
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
@@ -43,6 +44,7 @@ pub struct AppState {
     pub resend: resend::Client,
     pub telegram: telegram::Client,
     pub auth: Auth,
+    pub deadline: OffsetDateTime,
 }
 
 impl AppState {
@@ -51,6 +53,10 @@ impl AppState {
             Ok(text) => self.telegram.notify(text),
             Err(err) => tracing::error!(?err, template, "telegram template render failed"),
         }
+    }
+
+    pub fn submissions_closed(&self) -> bool {
+        OffsetDateTime::now_utc() >= self.deadline
     }
 }
 
@@ -82,6 +88,7 @@ async fn main() -> color_eyre::Result<()> {
         resend: resend::Client::new(http.clone(), env.resend_api_key, env.from_email),
         telegram: telegram::Client::new(http.clone(), env.telegram_bot_token, env.telegram_chat_id),
         auth: Auth::new(&env.rp_id, &env.rp_origin)?,
+        deadline: submissions::DEADLINE,
     };
 
     let app = build_router(state);

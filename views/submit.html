@@ -113,84 +113,92 @@
       with public sharing, wherever. We only need a link.
     </p>
 
-    <p>
-      Submissions close
-      <a href="/deadline"><strong>Sunday, April 26, 2026, 11:59 PM EAT</strong></a>.
-    </p>
+    {% if closed %}
+      <p>
+        Submissions closed
+        <a href="/deadline"><strong>Sunday, April 26, 2026, 11:59 PM EAT</strong></a>.
+        Thanks to everyone who entered.
+      </p>
+    {% else %}
+      <p>
+        Submissions close
+        <a href="/deadline"><strong>Sunday, April 26, 2026, 11:59 PM EAT</strong></a>.
+      </p>
 
-    {% if flash %}
-      <div class="flash error">{{ flash }}</div>
+      {% if flash %}
+        <div class="flash error">{{ flash }}</div>
+      {% endif %}
+
+      <form method="post" action="/submit">
+        <label for="title">
+          Essay title
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            maxlength="200"
+            value="{{ values.title }}"
+          />
+        </label>
+
+        <label for="description">
+          Short description
+          <span class="hint">A paragraph or two. What's the essay about?</span>
+          <textarea
+            id="description"
+            name="description"
+            required
+            maxlength="2000"
+          >{{ values.description }}</textarea>
+        </label>
+
+        <label for="author">
+          Author name
+          <input
+            type="text"
+            id="author"
+            name="author"
+            required
+            maxlength="200"
+            value="{{ values.author }}"
+          />
+        </label>
+
+        <label for="email">
+          Contact email
+          <span class="hint">We'll send a confirmation here.</span>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            maxlength="320"
+            value="{{ values.email }}"
+          />
+        </label>
+
+        <label for="link">
+          Link to published essay
+          <span class="hint">Make sure it is publicly accessible.</span>
+          <input
+            type="url"
+            id="link"
+            name="link"
+            required
+            maxlength="2000"
+            placeholder="https://"
+            value="{{ values.link }}"
+          />
+        </label>
+
+        <div
+          class="turnstile cf-turnstile"
+          data-sitekey="{{ turnstile_site_key }}"
+        ></div>
+
+        <button type="submit">Submit essay</button>
+      </form>
     {% endif %}
-
-    <form method="post" action="/submit">
-      <label for="title">
-        Essay title
-        <input
-          type="text"
-          id="title"
-          name="title"
-          required
-          maxlength="200"
-          value="{{ values.title }}"
-        />
-      </label>
-
-      <label for="description">
-        Short description
-        <span class="hint">A paragraph or two. What's the essay about?</span>
-        <textarea
-          id="description"
-          name="description"
-          required
-          maxlength="2000"
-        >{{ values.description }}</textarea>
-      </label>
-
-      <label for="author">
-        Author name
-        <input
-          type="text"
-          id="author"
-          name="author"
-          required
-          maxlength="200"
-          value="{{ values.author }}"
-        />
-      </label>
-
-      <label for="email">
-        Contact email
-        <span class="hint">We'll send a confirmation here.</span>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          required
-          maxlength="320"
-          value="{{ values.email }}"
-        />
-      </label>
-
-      <label for="link">
-        Link to published essay
-        <span class="hint">Make sure it is publicly accessible.</span>
-        <input
-          type="url"
-          id="link"
-          name="link"
-          required
-          maxlength="2000"
-          placeholder="https://"
-          value="{{ values.link }}"
-        />
-      </label>
-
-      <div
-        class="turnstile cf-turnstile"
-        data-sitekey="{{ turnstile_site_key }}"
-      ></div>
-
-      <button type="submit">Submit essay</button>
-    </form>
   </body>
 </html>
