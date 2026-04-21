@@ -353,15 +353,32 @@ async fn delete_submission(
         return Err(AppError::BadRequest("invalid csrf token"));
     }
 
-    let result = sqlx::query!("DELETE FROM submissions WHERE id = ?", id)
+    let row = sqlx::query!(
+        "SELECT title, author, email, link FROM submissions WHERE id = ?",
+        id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = row else {
+        tracing::warn!(id, "delete submission: no such row");
+        return Ok(Redirect::to("/admin").into_response());
+    };
+
+    sqlx::query!("DELETE FROM submissions WHERE id = ?", id)
         .execute(&state.db)
         .await?;
 
-    if result.rows_affected() == 0 {
-        tracing::warn!(id, "delete submission: no such row");
-    } else {
-        tracing::info!(id, "submission deleted");
-    }
+    tracing::info!(id, "submission deleted");
+    state.notify_telegram(
+        "telegram/submission_deleted.tg.html",
+        context! {
+            author => &row.author,
+            email => &row.email,
+            title => &row.title,
+            link => &row.link,
+        },
+    );
     Ok(Redirect::to("/admin").into_response())
 }
 
