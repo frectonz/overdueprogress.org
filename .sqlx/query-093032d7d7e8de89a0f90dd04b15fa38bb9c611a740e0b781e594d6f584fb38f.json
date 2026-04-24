@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO submission_edits\n            (submission_id, title, description, author, email, link, edit_kind)\n         VALUES (?, ?, ?, ?, ?, ?, 'edit')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "093032d7d7e8de89a0f90dd04b15fa38bb9c611a740e0b781e594d6f584fb38f"
+}

@@ -39,6 +39,15 @@ pub fn routes() -> Router<AppState> {
             .expect("valid delete rate limiter"),
     ));
 
+    let edit_limit = GovernorLayer::new(Arc::new(
+        GovernorConfigBuilder::default()
+            .key_extractor(SmartIpKeyExtractor)
+            .per_second(2)
+            .burst_size(5)
+            .finish()
+            .expect("valid edit rate limiter"),
+    ));
+
     Router::new()
         .route(
             "/submit",
@@ -49,6 +58,15 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/admin/submissions/{id}/delete",
             post(delete_submission).layer(delete_limit),
+        )
+        .route(
+            "/admin/submissions/{id}/edit",
+            get(edit_page).post(edit_handler).layer(edit_limit.clone()),
+        )
+        .route("/admin/submissions/{id}/history", get(history_page))
+        .route(
+            "/admin/submissions/{id}/history/{edit_id}/revert",
+            post(revert_submission).layer(edit_limit),
         )
 }
 
@@ -380,6 +398,338 @@ async fn delete_submission(
         },
     );
     Ok(Redirect::to("/admin").into_response())
+}
+
+#[derive(Serialize)]
+struct EditRow {
+    id: i64,
+    title: String,
+    description: String,
+    author: String,
+    email: String,
+    link: String,
+    created_at: String,
+    edit_kind: String,
+    reverted_from: Option<i64>,
+}
+
+#[derive(Deserialize)]
+struct EditSubmissionForm {
+    csrf_token: String,
+    title: String,
+    description: String,
+    author: String,
+    email: String,
+    link: String,
+}
+
+async fn edit_page(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        return Ok(redirect);
+    }
+    let csrf_token = auth::current_csrf_token(&state.db, &jar).await;
+
+    let row = sqlx::query!(
+        "SELECT title, description, author, email, link FROM submissions WHERE id = ?",
+        id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = row else {
+        tracing::warn!(id, "edit page: no such submission");
+        return Ok(Redirect::to("/admin").into_response());
+    };
+
+    let values = FormValues {
+        title: row.title,
+        description: row.description,
+        author: row.author,
+        email: row.email,
+        link: row.link,
+    };
+    Ok(render_edit_form(
+        &state,
+        id,
+        &values,
+        None,
+        csrf_token.as_deref(),
+    ))
+}
+
+async fn edit_handler(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+    Form(form): Form<EditSubmissionForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!(id, "edit submission denied: no session");
+        return Ok(redirect);
+    }
+
+    let Some(expected) = auth::current_csrf_token(&state.db, &jar).await else {
+        tracing::warn!(id, "edit submission denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if form.csrf_token != expected {
+        tracing::warn!(id, "edit submission denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    }
+
+    let values = FormValues {
+        title: form.title.trim().to_owned(),
+        description: form.description.trim().to_owned(),
+        author: form.author.trim().to_owned(),
+        email: form.email.trim().to_owned(),
+        link: form.link.trim().to_owned(),
+    };
+
+    if let Some(msg) = validate(&values) {
+        tracing::warn!(id, reason = msg, "edit submission rejected: validation");
+        return Ok(render_edit_form(
+            &state,
+            id,
+            &values,
+            Some(msg),
+            Some(&expected),
+        ));
+    }
+
+    let mut tx = state.db.begin().await?;
+    let current = sqlx::query!(
+        "SELECT title, description, author, email, link FROM submissions WHERE id = ?",
+        id
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let Some(current) = current else {
+        tracing::warn!(id, "edit submission: no such row");
+        return Ok(Redirect::to("/admin").into_response());
+    };
+
+    if current.title == values.title
+        && current.description == values.description
+        && current.author == values.author
+        && current.email == values.email
+        && current.link == values.link
+    {
+        tracing::info!(id, "edit submission: no-op, skipping");
+        return Ok(Redirect::to("/admin").into_response());
+    }
+
+    sqlx::query!(
+        "INSERT INTO submission_edits
+            (submission_id, title, description, author, email, link, edit_kind)
+         VALUES (?, ?, ?, ?, ?, ?, 'edit')",
+        id,
+        current.title,
+        current.description,
+        current.author,
+        current.email,
+        current.link,
+    )
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query!(
+        "UPDATE submissions
+            SET title = ?, description = ?, author = ?, email = ?, link = ?
+            WHERE id = ?",
+        values.title,
+        values.description,
+        values.author,
+        values.email,
+        values.link,
+        id,
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+
+    tracing::info!(id, "submission edited");
+    state.notify_telegram(
+        "telegram/submission_edited.tg.html",
+        context! {
+            id => id,
+            author => &values.author,
+            email => &values.email,
+            title => &values.title,
+            link => &values.link,
+        },
+    );
+    Ok(Redirect::to("/admin").into_response())
+}
+
+async fn history_page(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        return Ok(redirect);
+    }
+    let csrf_token = auth::current_csrf_token(&state.db, &jar).await;
+
+    let row = sqlx::query_as!(
+        SubmissionRow,
+        "SELECT id, title, description, author, email, link, created_at
+         FROM submissions WHERE id = ?",
+        id,
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = row else {
+        tracing::warn!(id, "history page: no such submission");
+        return Ok(Redirect::to("/admin").into_response());
+    };
+
+    let edits = sqlx::query_as!(
+        EditRow,
+        r#"SELECT id as "id!", title, description, author, email, link, created_at,
+                  edit_kind, reverted_from
+           FROM submission_edits
+           WHERE submission_id = ?
+           ORDER BY id DESC"#,
+        id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    tracing::info!(id, count = edits.len(), "history page rendered");
+    Ok(state.view.render(
+        "history.html",
+        context! {
+            row => row,
+            edits => edits,
+            csrf_token => csrf_token,
+        },
+    ))
+}
+
+async fn revert_submission(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((id, edit_id)): Path<(i64, i64)>,
+    Form(form): Form<DeleteForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!(id, edit_id, "revert denied: no session");
+        return Ok(redirect);
+    }
+
+    let Some(expected) = auth::current_csrf_token(&state.db, &jar).await else {
+        tracing::warn!(id, edit_id, "revert denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if form.csrf_token != expected {
+        tracing::warn!(id, edit_id, "revert denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    }
+
+    let mut tx = state.db.begin().await?;
+    let snapshot = sqlx::query!(
+        "SELECT title, description, author, email, link FROM submission_edits
+         WHERE id = ? AND submission_id = ?",
+        edit_id,
+        id,
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let Some(snapshot) = snapshot else {
+        tracing::warn!(id, edit_id, "revert: no such history entry");
+        return Ok(Redirect::to(&format!("/admin/submissions/{id}/history")).into_response());
+    };
+
+    let current = sqlx::query!(
+        "SELECT title, description, author, email, link FROM submissions WHERE id = ?",
+        id,
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let Some(current) = current else {
+        tracing::warn!(id, edit_id, "revert: no such submission");
+        return Ok(Redirect::to("/admin").into_response());
+    };
+
+    if current.title == snapshot.title
+        && current.description == snapshot.description
+        && current.author == snapshot.author
+        && current.email == snapshot.email
+        && current.link == snapshot.link
+    {
+        tracing::info!(id, edit_id, "revert: already at this state, skipping");
+        return Ok(Redirect::to(&format!("/admin/submissions/{id}/history")).into_response());
+    }
+
+    sqlx::query!(
+        "INSERT INTO submission_edits
+            (submission_id, title, description, author, email, link,
+             edit_kind, reverted_from)
+         VALUES (?, ?, ?, ?, ?, ?, 'revert', ?)",
+        id,
+        current.title,
+        current.description,
+        current.author,
+        current.email,
+        current.link,
+        edit_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query!(
+        "UPDATE submissions
+            SET title = ?, description = ?, author = ?, email = ?, link = ?
+            WHERE id = ?",
+        snapshot.title,
+        snapshot.description,
+        snapshot.author,
+        snapshot.email,
+        snapshot.link,
+        id,
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+
+    tracing::info!(id, edit_id, "submission reverted");
+    state.notify_telegram(
+        "telegram/submission_reverted.tg.html",
+        context! {
+            id => id,
+            edit_id => edit_id,
+            title => &snapshot.title,
+            author => &snapshot.author,
+            email => &snapshot.email,
+            link => &snapshot.link,
+        },
+    );
+    Ok(Redirect::to(&format!("/admin/submissions/{id}/history")).into_response())
+}
+
+fn render_edit_form(
+    state: &AppState,
+    id: i64,
+    values: &FormValues,
+    flash: Option<&str>,
+    csrf_token: Option<&str>,
+) -> Response {
+    state.view.render(
+        "edit.html",
+        context! {
+            id => id,
+            values => values,
+            flash => flash,
+            csrf_token => csrf_token,
+        },
+    )
 }
 
 #[cfg(test)]

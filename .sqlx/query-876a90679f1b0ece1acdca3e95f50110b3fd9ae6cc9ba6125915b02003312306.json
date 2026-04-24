@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE submissions\n            SET title = ?, description = ?, author = ?, email = ?, link = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "876a90679f1b0ece1acdca3e95f50110b3fd9ae6cc9ba6125915b02003312306"
+}

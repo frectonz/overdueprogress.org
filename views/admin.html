@@ -169,21 +169,33 @@
       }
       .actions {
         margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
       }
       .actions form {
         margin: 0;
       }
+      .actions a,
       .actions button {
         font-family: inherit;
         font-size: 13px;
-        color: #a33;
         background: transparent;
         border: 1px solid var(--rule);
         padding: 6px 12px;
         border-radius: 4px;
         cursor: pointer;
+        color: var(--ink);
+        text-decoration: none;
+        line-height: 1.2;
       }
-      .actions button:hover {
+      .actions a:hover {
+        border-color: #bdbdbd;
+      }
+      .actions button.delete {
+        color: #a33;
+      }
+      .actions button.delete:hover {
         color: #fff;
         background: #a33;
         border-color: #a33;
@@ -232,13 +244,15 @@
                 >
               </span>
               <span class="actions">
+                <a href="/admin/submissions/{{ r.id }}/edit">Edit</a>
+                <a href="/admin/submissions/{{ r.id }}/history">History</a>
                 <form
                   method="post"
                   action="/admin/submissions/{{ r.id }}/delete"
                   onsubmit="return confirm('Delete this submission? This cannot be undone.');"
                 >
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                  <button type="submit">Delete</button>
+                  <button type="submit" class="delete">Delete</button>
                 </form>
               </span>
             </div>

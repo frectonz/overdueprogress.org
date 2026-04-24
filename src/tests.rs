@@ -480,6 +480,215 @@ async fn delete_succeeds_with_valid_csrf_token() {
     assert_eq!(count, 0);
 }
 
+async fn seed_submission_and_session(db: &SqlitePool) {
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('orig title', 'orig desc', 'orig author', 'orig@b.co', 'https://orig.example')",
+    )
+    .execute(db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(db)
+    .await
+    .unwrap();
+}
+
+fn edit_form_body(csrf: &str) -> Body {
+    form_body(&[
+        ("csrf_token", csrf),
+        ("title", "new title"),
+        ("description", "new description"),
+        ("author", "new author"),
+        ("email", "new@b.co"),
+        ("link", "https://new.example"),
+    ])
+}
+
+#[tokio::test]
+async fn edit_rejects_bad_csrf_token() {
+    let (state, _mock) = setup_state(true).await;
+    seed_submission_and_session(&state.db).await;
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/edit")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(edit_form_body("wrong"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let title: (String,) = sqlx::query_as("SELECT title FROM submissions WHERE id = 1")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(title.0, "orig title");
+
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submission_edits")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(count, 0);
+}
+
+#[tokio::test]
+async fn edit_updates_submission_and_records_history() {
+    let (state, _mock) = setup_state(true).await;
+    seed_submission_and_session(&state.db).await;
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/edit")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(edit_form_body("good-csrf"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+
+    let updated: (String, String, String, String, String) = sqlx::query_as(
+        "SELECT title, description, author, email, link FROM submissions WHERE id = 1",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(updated.0, "new title");
+    assert_eq!(updated.1, "new description");
+    assert_eq!(updated.2, "new author");
+    assert_eq!(updated.3, "new@b.co");
+    assert_eq!(updated.4, "https://new.example");
+
+    let snap: (String, String, String) = sqlx::query_as(
+        "SELECT title, edit_kind, author FROM submission_edits WHERE submission_id = 1",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(snap.0, "orig title");
+    assert_eq!(snap.1, "edit");
+    assert_eq!(snap.2, "orig author");
+}
+
+#[tokio::test]
+async fn edit_with_identical_values_writes_no_history() {
+    let (state, _mock) = setup_state(true).await;
+    seed_submission_and_session(&state.db).await;
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let body = form_body(&[
+        ("csrf_token", "good-csrf"),
+        ("title", "orig title"),
+        ("description", "orig desc"),
+        ("author", "orig author"),
+        ("email", "orig@b.co"),
+        ("link", "https://orig.example"),
+    ]);
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/edit")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(body)
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submission_edits")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(count, 0, "no-op edit should not write history");
+}
+
+#[tokio::test]
+async fn revert_restores_prior_values_and_logs_revert_snapshot() {
+    let (state, _mock) = setup_state(true).await;
+    seed_submission_and_session(&state.db).await;
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/edit")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(edit_form_body("good-csrf"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+
+    let (edit_id,): (i64,) =
+        sqlx::query_as("SELECT id FROM submission_edits WHERE submission_id = 1")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(format!("/admin/submissions/1/history/{edit_id}/revert"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[("csrf_token", "good-csrf")]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+
+    let restored: (String, String) =
+        sqlx::query_as("SELECT title, author FROM submissions WHERE id = 1")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert_eq!(restored.0, "orig title");
+    assert_eq!(restored.1, "orig author");
+
+    let revert_snap: (String, String, Option<i64>) = sqlx::query_as(
+        "SELECT title, edit_kind, reverted_from FROM submission_edits
+         WHERE submission_id = 1 ORDER BY id DESC LIMIT 1",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(revert_snap.0, "new title");
+    assert_eq!(revert_snap.1, "revert");
+    assert_eq!(revert_snap.2, Some(edit_id));
+}
+
 #[tokio::test]
 async fn admin_rejects_unknown_session_cookie() {
     let (state, _mock) = setup_state(true).await;
