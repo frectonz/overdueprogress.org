@@ -53,14 +53,6 @@
         color: #666;
         margin-top: 4px;
       }
-      .closed {
-        margin-top: 32px;
-        padding: 16px 20px;
-        background: #fbeaea;
-        color: #8a1f1f;
-        border: 1px solid #e4bcbc;
-        border-radius: 6px;
-      }
       .stat {
         margin-top: 40px;
         padding: 20px 24px;
@@ -92,7 +84,12 @@
     </p>
 
     {% if closed %}
-      <div class="closed">Submissions are closed.</div>
+      <div class="countdown" aria-live="polite">
+        <div class="cell"><div class="num">00</div><div class="label">Days</div></div>
+        <div class="cell"><div class="num">00</div><div class="label">Hours</div></div>
+        <div class="cell"><div class="num">00</div><div class="label">Minutes</div></div>
+        <div class="cell"><div class="num">00</div><div class="label">Seconds</div></div>
+      </div>
     {% else %}
       <div
         class="countdown"

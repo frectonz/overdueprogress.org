@@ -96,6 +96,19 @@
         color: #8a1f1f;
         border: 1px solid #e4bcbc;
       }
+      .closed {
+        margin-top: 32px;
+        padding: 16px 20px;
+        background: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+      .closed p {
+        margin: 0;
+      }
+      .closed p + p {
+        margin-top: 8px;
+      }
       .sign-off {
         margin-top: 48px;
         color: #666;
@@ -114,17 +127,21 @@
     </p>
 
     {% if missed %}
-      <p>
-        Your submission arrived after the deadline
-        (<a href="/deadline"><strong>Monday, April 27, 2026, 12:59 AM EAT</strong></a>)
-        and couldn't be accepted. Sorry you missed it.
-      </p>
+      <div class="closed">
+        <p>
+          Your submission arrived after the deadline
+          (<a href="/deadline"><strong>Monday, April 27, 2026, 12:59 AM EAT</strong></a>)
+          and couldn't be accepted. Sorry you missed it.
+        </p>
+      </div>
     {% elif closed %}
-      <p>
-        Submissions closed
-        <a href="/deadline"><strong>Monday, April 27, 2026, 12:59 AM EAT</strong></a>.
-        Thanks to everyone who entered.
-      </p>
+      <div class="closed">
+        <p>
+          Submissions closed
+          <a href="/deadline"><strong>Monday, April 27, 2026, 12:59 AM EAT</strong></a>.
+          Thanks to everyone who entered.
+        </p>
+      </div>
     {% else %}
       <p>
         Submissions close
