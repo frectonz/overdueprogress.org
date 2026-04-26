@@ -56,12 +56,14 @@ struct StatsContext {
     edits_total: i64,
     reverts_total: i64,
     submissions_edited: i64,
+    duplicate_authors_count: usize,
     title_words: Vec<WordFreq>,
     description_words: Vec<WordFreq>,
     timeline: Vec<DayCount>,
     hour_of_day: Vec<HourCount>,
     email_domains: Vec<DomainCount>,
     link_domains: Vec<DomainCount>,
+    duplicate_authors: Vec<DuplicateAuthor>,
 }
 
 #[derive(Serialize)]
@@ -92,6 +94,19 @@ struct DomainCount {
     domain: String,
     count: usize,
     weight: f64,
+}
+
+#[derive(Serialize)]
+struct DuplicateAuthor {
+    name: String,
+    count: usize,
+    emails: Vec<String>,
+}
+
+struct AuthorAgg {
+    display: String,
+    emails: Vec<String>,
+    count: usize,
 }
 
 struct Row {
@@ -154,7 +169,7 @@ fn compute_stats(
     let cutoff_24h = now - TimeDuration::hours(24);
     let cutoff_final_24h = DEADLINE - TimeDuration::hours(24);
 
-    let mut authors: HashMap<String, ()> = HashMap::new();
+    let mut authors: HashMap<String, AuthorAgg> = HashMap::new();
     let mut email_domains: HashMap<String, usize> = HashMap::new();
     let mut link_domains: HashMap<String, usize> = HashMap::new();
     let mut title_words: HashMap<String, usize> = HashMap::new();
@@ -166,9 +181,19 @@ fn compute_stats(
     let mut latest_iso: Option<&str> = None;
 
     for row in rows {
-        let key = row.author.trim().to_lowercase();
+        let display = row.author.trim();
+        let key = display.to_lowercase();
         if !key.is_empty() {
-            authors.insert(key, ());
+            let entry = authors.entry(key).or_insert_with(|| AuthorAgg {
+                display: display.to_string(),
+                emails: Vec::new(),
+                count: 0,
+            });
+            entry.count += 1;
+            let email = row.email.trim().to_lowercase();
+            if !email.is_empty() && !entry.emails.iter().any(|e| e == &email) {
+                entry.emails.push(email);
+            }
         }
 
         if let Some(domain) = email_domain(&row.email) {
@@ -211,6 +236,22 @@ fn compute_stats(
     }
 
     stats.distinct_authors = authors.len();
+    let mut dups: Vec<DuplicateAuthor> = authors
+        .into_values()
+        .filter(|a| a.count > 1)
+        .map(|a| DuplicateAuthor {
+            name: a.display,
+            count: a.count,
+            emails: a.emails,
+        })
+        .collect();
+    dups.sort_by(|a, b| {
+        b.count
+            .cmp(&a.count)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+    stats.duplicate_authors_count = dups.len();
+    stats.duplicate_authors = dups;
     stats.distinct_email_domains = email_domains.len();
     stats.distinct_link_domains = link_domains.len();
     stats.last_submission_at = latest_iso.map(str::to_string);
