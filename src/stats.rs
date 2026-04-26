@@ -1,11 +1,6 @@
 use std::collections::HashMap;
 
-use axum::{
-    Router,
-    extract::State,
-    response::Response,
-    routing::get,
-};
+use axum::{Router, extract::State, response::Response, routing::get};
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::context;
 use serde::Serialize;
@@ -30,19 +25,18 @@ const STOPWORDS: &[&str] = &[
     "the", "a", "an", "and", "or", "but", "of", "in", "on", "at", "to", "from", "by", "for",
     "with", "as", "is", "are", "was", "were", "be", "been", "being", "am", "has", "have", "had",
     "having", "do", "does", "did", "doing", "done", "will", "would", "could", "should", "may",
-    "might", "must", "can", "shall", "that", "this", "these", "those", "it", "its", "they",
-    "them", "their", "theirs", "we", "our", "us", "ours", "you", "your", "yours", "i", "my",
-    "me", "mine", "he", "she", "him", "her", "his", "hers", "not", "no", "nor", "so", "if",
-    "then", "than", "too", "also", "just", "very", "quite", "really", "more", "most", "much",
-    "many", "some", "any", "all", "each", "every", "only", "even", "still", "yet", "here",
-    "there", "where", "when", "why", "how", "what", "who", "whom", "which", "whose", "into",
-    "onto", "out", "off", "up", "down", "over", "under", "again", "ever", "never", "always",
-    "often", "about", "against", "between", "through", "during", "before", "after", "above",
-    "below", "without", "within", "along", "across", "behind", "beyond", "upon", "such",
-    "while", "because", "though", "although", "yes", "okay", "well", "like", "get", "got",
-    "make", "made", "one", "two", "way", "thing", "things", "lot", "lots",
-    "don", "didn", "doesn", "won", "wouldn", "couldn", "shouldn", "isn", "aren", "wasn",
-    "weren", "haven", "hasn", "hadn", "ll", "ve", "re",
+    "might", "must", "can", "shall", "that", "this", "these", "those", "it", "its", "they", "them",
+    "their", "theirs", "we", "our", "us", "ours", "you", "your", "yours", "i", "my", "me", "mine",
+    "he", "she", "him", "her", "his", "hers", "not", "no", "nor", "so", "if", "then", "than",
+    "too", "also", "just", "very", "quite", "really", "more", "most", "much", "many", "some",
+    "any", "all", "each", "every", "only", "even", "still", "yet", "here", "there", "where",
+    "when", "why", "how", "what", "who", "whom", "which", "whose", "into", "onto", "out", "off",
+    "up", "down", "over", "under", "again", "ever", "never", "always", "often", "about", "against",
+    "between", "through", "during", "before", "after", "above", "below", "without", "within",
+    "along", "across", "behind", "beyond", "upon", "such", "while", "because", "though",
+    "although", "yes", "okay", "well", "like", "get", "got", "make", "made", "one", "two", "way",
+    "thing", "things", "lot", "lots", "don", "didn", "doesn", "won", "wouldn", "couldn", "shouldn",
+    "isn", "aren", "wasn", "weren", "haven", "hasn", "hadn", "ll", "ve", "re",
 ];
 
 #[derive(Serialize, Default)]
@@ -330,9 +324,18 @@ fn format_day(iso_day: &str) -> String {
         return iso_day.to_string();
     };
     let month_name = match month {
-        "01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr",
-        "05" => "May", "06" => "Jun", "07" => "Jul", "08" => "Aug",
-        "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec",
+        "01" => "Jan",
+        "02" => "Feb",
+        "03" => "Mar",
+        "04" => "Apr",
+        "05" => "May",
+        "06" => "Jun",
+        "07" => "Jul",
+        "08" => "Aug",
+        "09" => "Sep",
+        "10" => "Oct",
+        "11" => "Nov",
+        "12" => "Dec",
         _ => return iso_day.to_string(),
     };
     let day_num = day.trim_start_matches('0');
@@ -361,7 +364,8 @@ mod tests {
 
     #[test]
     fn extracts_words_skipping_stopwords_and_short() {
-        let words: Vec<String> = iter_words("The quick, brown fox jumps over a lazy dog.").collect();
+        let words: Vec<String> =
+            iter_words("The quick, brown fox jumps over a lazy dog.").collect();
         // "the", "a", "over" are stopwords; commas/periods become delimiters.
         assert_eq!(words, vec!["quick", "brown", "fox", "jumps", "lazy", "dog"]);
     }
