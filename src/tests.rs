@@ -7,16 +7,14 @@ use sqlx::{
     SqlitePool,
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
 };
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 use tower::ServiceExt;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
     matchers::{method, path, path_regex},
 };
 
-use crate::{
-    AppState, auth::Auth, build_router, resend, submissions, telegram, turnstile, view::View,
-};
+use crate::{AppState, auth::Auth, build_router, resend, telegram, turnstile, view::View};
 
 async fn setup_db() -> SqlitePool {
     let opts = SqliteConnectOptions::new()
@@ -79,7 +77,7 @@ async fn setup_state(turnstile_ok: bool) -> (AppState, MockServer) {
             mock.uri(),
         ),
         auth: Auth::new("localhost", "http://localhost:3000").unwrap(),
-        deadline: submissions::DEADLINE,
+        deadline: OffsetDateTime::now_utc() + Duration::days(365),
     };
     (state, mock)
 }
@@ -348,10 +346,14 @@ async fn deadline_page_shows_closed_after_deadline() {
     let res = app.oneshot(get("/deadline")).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
     let body = body_text(res).await;
-    assert!(body.contains("Submissions are closed"), "body: {body}");
+    assert!(body.contains("closed"), "body: {body}");
     assert!(
         !body.contains(r#"id="countdown""#),
-        "countdown should be hidden"
+        "live countdown should be hidden"
+    );
+    assert!(
+        body.contains(r#"<div class="num">00</div>"#),
+        "expected zeroed countdown cells"
     );
 }
 
