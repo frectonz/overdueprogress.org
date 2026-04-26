@@ -113,7 +113,13 @@
       with public sharing, wherever. We only need a link.
     </p>
 
-    {% if closed %}
+    {% if missed %}
+      <p>
+        Your submission arrived after the deadline
+        (<a href="/deadline"><strong>Sunday, April 26, 2026, 11:59 PM EAT</strong></a>)
+        and couldn't be accepted. Sorry you missed it.
+      </p>
+    {% elif closed %}
       <p>
         Submissions closed
         <a href="/deadline"><strong>Sunday, April 26, 2026, 11:59 PM EAT</strong></a>.

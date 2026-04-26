@@ -130,11 +130,9 @@ async fn submit_page(State(state): State<AppState>) -> Response {
 async fn submit_handler(State(state): State<AppState>, Form(form): Form<SubmitForm>) -> Response {
     if state.submissions_closed() {
         tracing::warn!("submission rejected: deadline passed");
-        return render_form(
-            &state,
-            &FormValues::from_submitted(&form),
-            Some("Submissions are closed."),
-        );
+        return state
+            .view
+            .render("submit.html", context! { missed => true });
     }
 
     let values = FormValues::from_submitted(&form);

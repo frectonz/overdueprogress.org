@@ -317,7 +317,7 @@ async fn submit_rejected_after_deadline() {
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
     let body = body_text(res).await;
-    assert!(body.contains("Submissions closed"), "body: {body}");
+    assert!(body.contains("Sorry you missed it"), "body: {body}");
     assert!(!body.contains("<form"), "form should not render");
 
     let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM submissions")
