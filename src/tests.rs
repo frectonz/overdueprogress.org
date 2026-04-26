@@ -690,6 +690,95 @@ async fn revert_restores_prior_values_and_logs_revert_snapshot() {
 }
 
 #[tokio::test]
+async fn stats_redirects_when_unauthenticated() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query("INSERT INTO passkeys (credential_id, data, label) VALUES ('x', '{}', 'seed')")
+        .execute(&state.db)
+        .await
+        .unwrap();
+    let app = build_router(state);
+
+    let res = app.oneshot(get("/admin/stats")).await.unwrap();
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+    assert_eq!(res.headers().get("location").unwrap(), "/admin/login");
+}
+
+#[tokio::test]
+async fn stats_renders_with_data() {
+    let (state, _mock) = setup_state(true).await;
+    // Two submissions from different authors and link domains, with a few
+    // shared description words so the cloud has something to weight.
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES
+            ('Progress notes', 'progress means slow steady steady work today', 'Alice', 'alice@example.com', 'https://example.com/a'),
+            ('Slow progress', 'slow steady progress overdue today work matters', 'Bob', 'bob@gmail.com', 'https://substack.com/b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .uri("/admin/stats")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = res.status();
+    let body = body_text(res).await;
+    assert_eq!(status, StatusCode::OK, "body: {body}");
+    assert!(body.contains("Stats"));
+    // Frequency-weighted words from the two descriptions.
+    assert!(body.contains("progress"), "expected progress in cloud");
+    assert!(body.contains("steady"), "expected steady in cloud");
+    // Email and link domains are aggregated.
+    assert!(body.contains("example.com"));
+    assert!(body.contains("substack.com"));
+    assert!(body.contains("gmail.com"));
+}
+
+#[tokio::test]
+async fn stats_renders_empty_state() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .uri("/admin/stats")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let body = body_text(res).await;
+    assert!(body.contains("No submissions yet"), "body: {body}");
+}
+
+#[tokio::test]
 async fn admin_rejects_unknown_session_cookie() {
     let (state, _mock) = setup_state(true).await;
     sqlx::query("INSERT INTO passkeys (credential_id, data, label) VALUES ('x', '{}', 'seed')")

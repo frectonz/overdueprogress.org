@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stats — Overdue Progress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --muted: #6b6b6b;
+        --rule: #e6e6e6;
+        --bg: #fafaf8;
+        --card: #ffffff;
+        --accent: #0b3d91;
+        --accent-soft: #e9eef9;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Source Serif 4", Georgia, serif;
+        font-size: 17px;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 940px;
+        margin: 0 auto;
+        padding: 56px 24px 120px;
+      }
+      header.page {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 20px;
+        margin-bottom: 32px;
+      }
+      header.page h1 {
+        font-size: 30px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      header.page .right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      header.page a.nav,
+      header.page form.logout button {
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid var(--rule);
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      header.page a.nav:hover,
+      header.page form.logout button:hover {
+        color: var(--ink);
+        border-color: #bdbdbd;
+      }
+      header.page form.logout {
+        margin: 0;
+      }
+
+      section {
+        margin-bottom: 44px;
+      }
+      section > h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 16px;
+        letter-spacing: -0.005em;
+      }
+      section > p.note {
+        margin: -8px 0 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 14px 16px;
+      }
+      .card .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .card .value {
+        font-size: 28px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        margin-top: 4px;
+        line-height: 1.2;
+      }
+      .card .sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 22px 24px;
+      }
+
+      /* Word cloud */
+      .cloud {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 14px;
+        line-height: 1.4;
+      }
+      .cloud .w {
+        color: var(--ink);
+        font-weight: 400;
+        white-space: nowrap;
+      }
+      .cloud .w .count {
+        color: var(--muted);
+        font-size: 0.55em;
+        margin-left: 2px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 400;
+      }
+      .cloud-empty {
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      /* Bar charts */
+      .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 40px;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+      }
+      .bar-row .name {
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .bar-row .track {
+        position: relative;
+        height: 14px;
+        background: var(--accent-soft);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .bar-row .fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--accent);
+        border-radius: 3px;
+      }
+      .bar-row .count {
+        text-align: right;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Hour-of-day vertical bars */
+      .hours {
+        display: grid;
+        grid-template-columns: repeat(24, 1fr);
+        gap: 3px;
+        align-items: end;
+        height: 120px;
+        margin-bottom: 6px;
+      }
+      .hour {
+        background: var(--accent-soft);
+        border-radius: 2px 2px 0 0;
+        min-height: 2px;
+        position: relative;
+      }
+      .hour .fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--accent);
+        border-radius: 2px 2px 0 0;
+      }
+      .hour-axis {
+        display: grid;
+        grid-template-columns: repeat(24, 1fr);
+        gap: 3px;
+        font-size: 10px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      @media (max-width: 720px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .bar-row {
+          grid-template-columns: 90px 1fr 36px;
+        }
+      }
+
+      .empty {
+        color: var(--muted);
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="page">
+        <h1>Stats</h1>
+        <div class="right">
+          <a class="nav" href="/admin">Submissions</a>
+          <form method="post" action="/admin/logout" class="logout">
+            <button type="submit">Sign out</button>
+          </form>
+        </div>
+      </header>
+
+      {% if stats.total == 0 %}
+        <p class="empty">No submissions yet.</p>
+      {% else %}
+
+      <section>
+        <div class="cards">
+          <div class="card">
+            <div class="label">Total</div>
+            <div class="value">{{ stats.total }}</div>
+            <div class="sub">submission{{ "s" if stats.total != 1 else "" }}</div>
+          </div>
+          <div class="card">
+            <div class="label">Authors</div>
+            <div class="value">{{ stats.distinct_authors }}</div>
+            <div class="sub">distinct names</div>
+          </div>
+          <div class="card">
+            <div class="label">Email domains</div>
+            <div class="value">{{ stats.distinct_email_domains }}</div>
+            <div class="sub">distinct</div>
+          </div>
+          <div class="card">
+            <div class="label">Link domains</div>
+            <div class="value">{{ stats.distinct_link_domains }}</div>
+            <div class="sub">distinct</div>
+          </div>
+          <div class="card">
+            <div class="label">Final 24h</div>
+            <div class="value">{{ stats.final_24h_before_deadline }}</div>
+            <div class="sub">before deadline</div>
+          </div>
+          <div class="card">
+            <div class="label">Last 24h</div>
+            <div class="value">{{ stats.last_24h }}</div>
+            <div class="sub">since now</div>
+          </div>
+          <div class="card">
+            <div class="label">Edits</div>
+            <div class="value">{{ stats.edits_total }}</div>
+            <div class="sub">
+              {{ stats.submissions_edited }} submission{{ "s" if stats.submissions_edited != 1 else "" }}
+              {% if stats.reverts_total > 0 %}
+                · {{ stats.reverts_total }} revert{{ "s" if stats.reverts_total != 1 else "" }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="card">
+            <div class="label">Last submission</div>
+            <div class="value" style="font-size: 16px; font-weight: 400;">
+              {% if stats.last_submission_at %}
+                <time datetime="{{ stats.last_submission_at }}">{{ stats.last_submission_at }}</time>
+              {% else %}
+                —
+              {% endif %}
+            </div>
+            <div class="sub">most recent</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Words in titles</h2>
+        <p class="note">Top {{ stats.title_words | length }} words across all submission titles, sized by frequency.</p>
+        <div class="panel">
+          {% if stats.title_words %}
+            <div class="cloud">
+              {% for w in stats.title_words %}
+                <span class="w" style="font-size: {{ (12 + (w.weight * 30)) | round(1) }}px; opacity: {{ (0.55 + w.weight * 0.45) | round(2) }};">
+                  {{ w.word }}<span class="count">{{ w.count }}</span>
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="cloud-empty">No words after filtering.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section>
+        <h2>Words in descriptions</h2>
+        <p class="note">
+          Top {{ stats.description_words | length }} words across all descriptions
+          (avg {{ stats.desc_word_avg }} words per submission · median {{ stats.desc_word_median }}
+          · range {{ stats.desc_word_min }}–{{ stats.desc_word_max }}).
+        </p>
+        <div class="panel">
+          {% if stats.description_words %}
+            <div class="cloud">
+              {% for w in stats.description_words %}
+                <span class="w" style="font-size: {{ (12 + (w.weight * 36)) | round(1) }}px; opacity: {{ (0.55 + w.weight * 0.45) | round(2) }};">
+                  {{ w.word }}<span class="count">{{ w.count }}</span>
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="cloud-empty">No words after filtering.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section>
+        <h2>Submissions over time</h2>
+        <div class="panel">
+          {% if stats.timeline %}
+            <div class="bars">
+              {% for d in stats.timeline %}
+                <div class="bar-row">
+                  <span class="name">{{ d.label }}</span>
+                  <span class="track"><span class="fill" style="width: {{ (d.weight * 100) | round(1) }}%;"></span></span>
+                  <span class="count">{{ d.count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty">No timestamps available.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section>
+        <h2>Hour of day (UTC)</h2>
+        <p class="note">When submissions hit the server, by hour.</p>
+        <div class="panel">
+          <div class="hours">
+            {% for h in stats.hour_of_day %}
+              <div class="hour" title="{{ h.label }}:00 UTC — {{ h.count }}">
+                <span class="fill" style="height: {{ (h.weight * 100) | round(1) }}%;"></span>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="hour-axis">
+            {% for h in stats.hour_of_day %}
+              <span>{% if h.hour % 3 == 0 %}{{ h.label }}{% endif %}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Top domains</h2>
+        <div class="grid-2">
+          <div>
+            <p class="note">Email domains</p>
+            <div class="panel">
+              {% if stats.email_domains %}
+                <div class="bars">
+                  {% for d in stats.email_domains %}
+                    <div class="bar-row">
+                      <span class="name" title="{{ d.domain }}">{{ d.domain }}</span>
+                      <span class="track"><span class="fill" style="width: {{ (d.weight * 100) | round(1) }}%;"></span></span>
+                      <span class="count">{{ d.count }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="empty">None.</p>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <p class="note">Essay link domains</p>
+            <div class="panel">
+              {% if stats.link_domains %}
+                <div class="bars">
+                  {% for d in stats.link_domains %}
+                    <div class="bar-row">
+                      <span class="name" title="{{ d.domain }}">{{ d.domain }}</span>
+                      <span class="track"><span class="fill" style="width: {{ (d.weight * 100) | round(1) }}%;"></span></span>
+                      <span class="count">{{ d.count }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="empty">None.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {% endif %}
+    </main>
+
+    <script>
+      (function () {
+        if (typeof Intl === "undefined" || !Intl.RelativeTimeFormat) return;
+        const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+        const UNITS = [
+          ["year", 31536000],
+          ["month", 2592000],
+          ["week", 604800],
+          ["day", 86400],
+          ["hour", 3600],
+          ["minute", 60],
+          ["second", 1],
+        ];
+        function relative(iso) {
+          const t = Date.parse(iso);
+          if (Number.isNaN(t)) return null;
+          const diff = (t - Date.now()) / 1000;
+          const abs = Math.abs(diff);
+          for (const [unit, secs] of UNITS) {
+            if (abs >= secs || unit === "second") {
+              return rtf.format(Math.round(diff / secs), unit);
+            }
+          }
+        }
+        document.querySelectorAll("time[datetime]").forEach((el) => {
+          const rel = relative(el.getAttribute("datetime"));
+          if (rel) {
+            el.title = el.getAttribute("datetime");
+            el.textContent = rel;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

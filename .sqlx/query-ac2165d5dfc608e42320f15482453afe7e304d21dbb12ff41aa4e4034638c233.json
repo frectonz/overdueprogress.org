@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n            COUNT(*) AS \"total!: i64\",\n            COALESCE(SUM(CASE WHEN edit_kind = 'revert' THEN 1 ELSE 0 END), 0) AS \"reverts!: i64\",\n            COUNT(DISTINCT submission_id) AS \"edited_subs!: i64\"\n           FROM submission_edits",
+  "describe": {
+    "columns": [
+      {
+        "name": "total!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "reverts!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "edited_subs!: i64",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ac2165d5dfc608e42320f15482453afe7e304d21dbb12ff41aa4e4034638c233"
+}

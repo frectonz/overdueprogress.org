@@ -63,7 +63,8 @@
       .logout {
         margin: 0;
       }
-      .logout button {
+      .logout button,
+      header.page a.nav {
         font-family: inherit;
         font-size: 13px;
         color: var(--muted);
@@ -72,8 +73,10 @@
         padding: 6px 12px;
         border-radius: 4px;
         cursor: pointer;
+        text-decoration: none;
       }
-      .logout button:hover {
+      .logout button:hover,
+      header.page a.nav:hover {
         color: var(--ink);
         border-color: #bdbdbd;
       }
@@ -210,6 +213,7 @@
           <span class="count">
             {{ rows | length }} {{ "entry" if rows | length == 1 else "entries" }}
           </span>
+          <a class="nav" href="/admin/stats">Stats</a>
           <form method="post" action="/admin/logout" class="logout">
             <button type="submit">Sign out</button>
           </form>
