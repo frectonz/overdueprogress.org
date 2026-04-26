@@ -18,7 +18,7 @@ use crate::AppState;
 use crate::auth;
 use crate::error::AppError;
 
-pub const DEADLINE: OffsetDateTime = datetime!(2026-04-26 20:59:00 UTC);
+pub const DEADLINE: OffsetDateTime = datetime!(2026-04-26 21:59:00 UTC);
 
 pub fn routes() -> Router<AppState> {
     let submit_limit = GovernorLayer::new(Arc::new(
