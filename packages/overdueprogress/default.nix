@@ -44,7 +44,7 @@ let
   cargoArtifacts = craneLib.buildDepsOnly (
     commonArgs
     // {
-      pname = "${manifest.name}-deps";
+      pname = manifest.name;
       version = manifest.version;
       src = craneLib.cleanCargoSource flake;
     }
