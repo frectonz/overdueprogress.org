@@ -1,12 +1,17 @@
 {
   pkgs,
   flake,
+  inputs,
   ...
 }:
 let
+  pkgs' = pkgs.appendOverlays [ (import inputs.rust-overlay) ];
+  rustToolchain = pkgs'.rust-bin.stable.latest.default;
+  craneLib = (inputs.crane.mkLib pkgs').overrideToolchain rustToolchain;
+
   manifest = (fromTOML (builtins.readFile (flake + "/Cargo.toml"))).package;
 
-  src = pkgs.lib.cleanSourceWith {
+  fullSrc = pkgs.lib.cleanSourceWith {
     src = flake;
     filter =
       path: _:
@@ -28,25 +33,37 @@ let
       || pkgs.lib.hasPrefix "static/" rel
       || pkgs.lib.hasPrefix ".sqlx/" rel;
   };
-in
-pkgs.rustPlatform.buildRustPackage {
-  pname = manifest.name;
-  version = manifest.version;
-  inherit src;
 
-  cargoLock.lockFile = flake + "/Cargo.lock";
-
-  nativeBuildInputs = [ pkgs.pkg-config ];
-  buildInputs = [ pkgs.openssl ];
-
-  env.SQLX_OFFLINE = "true";
-
-  doCheck = false;
-
-  meta = {
-    description = "Overdue Progress submission server";
-    homepage = "https://overdueprogress.org";
-    license = pkgs.lib.licenses.mit;
-    mainProgram = "overdueprogress";
+  commonArgs = {
+    strictDeps = true;
+    nativeBuildInputs = [ pkgs.pkg-config ];
+    buildInputs = [ pkgs.openssl ];
+    env.SQLX_OFFLINE = "true";
   };
-}
+
+  cargoArtifacts = craneLib.buildDepsOnly (
+    commonArgs
+    // {
+      pname = "${manifest.name}-deps";
+      version = manifest.version;
+      src = craneLib.cleanCargoSource flake;
+    }
+  );
+in
+craneLib.buildPackage (
+  commonArgs
+  // {
+    inherit cargoArtifacts;
+    pname = manifest.name;
+    version = manifest.version;
+    src = fullSrc;
+    doCheck = false;
+
+    meta = {
+      description = "Overdue Progress submission server";
+      homepage = "https://overdueprogress.org";
+      license = pkgs.lib.licenses.mit;
+      mainProgram = "overdueprogress";
+    };
+  }
+)
