@@ -1,11 +1,9 @@
 {
   pkgs,
-  inputs,
   ...
 }:
 let
-  pkgs' = pkgs.appendOverlays [ (import inputs.rust-overlay) ];
-  rust = pkgs'.rust-bin.stable.latest.default;
+  rust = pkgs.rust-bin.stable.latest.default;
 
   vars = import ./hosts/op/variables.nix;
   target = "root@${vars.sshHost}";
@@ -78,7 +76,7 @@ let
     '';
   };
 in
-pkgs'.mkShellNoCC {
+pkgs.mkShellNoCC {
   packages = [
     rust
     pkgs.sqlx-cli

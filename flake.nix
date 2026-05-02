@@ -25,5 +25,10 @@
     crane.url = "github:ipetkov/crane";
   };
 
-  outputs = inputs: inputs.blueprint { inherit inputs; };
+  outputs =
+    inputs:
+    inputs.blueprint {
+      inherit inputs;
+      nixpkgs.overlays = [ (import inputs.rust-overlay) ];
+    };
 }

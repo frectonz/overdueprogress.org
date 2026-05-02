@@ -5,9 +5,8 @@
   ...
 }:
 let
-  pkgs' = pkgs.appendOverlays [ (import inputs.rust-overlay) ];
-  rustToolchain = pkgs'.rust-bin.stable.latest.default;
-  craneLib = (inputs.crane.mkLib pkgs').overrideToolchain rustToolchain;
+  rustToolchain = pkgs.rust-bin.stable.latest.default;
+  craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rustToolchain;
 
   manifest = (fromTOML (builtins.readFile (flake + "/Cargo.toml"))).package;
 
