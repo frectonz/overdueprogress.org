@@ -25,6 +25,8 @@ let
         --hostname op \
         --target-host ${target} \
         --build-host ${target} \
+        --elevation-strategy none \
+        --diff never \
         "$@" \
         .
     '';
