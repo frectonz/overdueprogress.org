@@ -10,4 +10,9 @@
     owner = config.services.overdueprogress.user;
     mode = "0400";
   };
+
+  systemd.services.overdueprogress = {
+    after = [ "sops-install-secrets.service" ];
+    wants = [ "sops-install-secrets.service" ];
+  };
 }

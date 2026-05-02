@@ -11,6 +11,8 @@ let
   oneshot = desc: args: {
     description = desc;
     path = [ pkgs.systemd ];
+    after = [ "sops-install-secrets.service" ];
+    wants = [ "sops-install-secrets.service" ];
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = envFile;
@@ -36,8 +38,14 @@ in
   systemd.services."telegram-notify@" = oneshot "Telegram alert for %i" "failure %i";
 
   systemd.services.boot-notify = (oneshot "Telegram boot notification" "boot") // {
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
+    after = [
+      "sops-install-secrets.service"
+      "network-online.target"
+    ];
+    wants = [
+      "sops-install-secrets.service"
+      "network-online.target"
+    ];
     wantedBy = [ "multi-user.target" ];
   };
 
