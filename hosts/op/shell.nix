@@ -1,5 +1,7 @@
-{ pkgs, ... }:
+{ flake, pkgs, ... }:
 {
+  imports = [ flake.inputs.nix-index-database.nixosModules.nix-index ];
+
   users.users.root.shell = pkgs.fish;
 
   programs.fish = {
@@ -18,6 +20,14 @@
   };
 
   programs.starship.enable = true;
+
+  programs.nh = {
+    enable = true;
+    clean.enable = true;
+    clean.extraArgs = "--keep-since 4d --keep 3";
+  };
+
+  programs.nix-index-database.comma.enable = true;
 
   environment.systemPackages = [
     pkgs.bat
