@@ -41,8 +41,7 @@ in
     wantedBy = [ "multi-user.target" ];
   };
 
-  systemd.services.failed-units-check =
-    oneshot "Scan for systemd units in failed state" "failed-units";
+  systemd.services.failed-units-check = oneshot "Scan for systemd units in failed state" "failed-units";
 
   systemd.timers.failed-units-check = {
     description = "Periodic failed-units scan";

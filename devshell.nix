@@ -19,14 +19,14 @@ let
 
   server-switch = pkgs.writeShellApplication {
     name = "server-switch";
-    runtimeInputs = [ pkgs.nixos-rebuild ];
+    runtimeInputs = [ pkgs.nh ];
     text = ''
-      nixos-rebuild \
-        --no-reexec \
-        --flake .#op \
+      nh os switch \
+        --hostname op \
         --target-host ${target} \
         --build-host ${target} \
-        switch "$@"
+        "$@" \
+        .
     '';
   };
 
@@ -87,6 +87,7 @@ pkgs'.mkShellNoCC {
 
     pkgs.nixos-rebuild
     pkgs.nixos-anywhere
+    pkgs.nh
     pkgs.sops
     pkgs.ssh-to-age
     pkgs.age
