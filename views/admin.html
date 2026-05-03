@@ -580,7 +580,7 @@
           <table class="subs" id="subs">
             <thead>
               <tr>
-                <th data-sort="num" data-key="id" class="sort-desc">ID<span class="arrow">▾</span></th>
+                <th data-sort="num" data-key="id" class="sort-asc">ID<span class="arrow">▴</span></th>
                 <th data-sort="text" data-key="created">Created<span class="arrow">▾</span></th>
                 <th data-sort="text" data-key="author">Author<span class="arrow">▾</span></th>
                 <th data-sort="text" data-key="email">Email<span class="arrow">▾</span></th>
@@ -911,7 +911,7 @@
         // Sort
         const headers = Array.from(table.querySelectorAll("thead th[data-sort]"));
         let sortKey = "id";
-        let sortDir = "desc";
+        let sortDir = "asc";
         function sortBy(key, dir) {
           const isNum = headers.find((h) => h.dataset.key === key)?.dataset.sort === "num";
           const sorted = rows.slice().sort((a, b) => {

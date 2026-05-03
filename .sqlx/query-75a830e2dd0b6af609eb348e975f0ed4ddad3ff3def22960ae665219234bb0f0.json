@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, title, description, author, email, link, created_at, reviewed_at\n         FROM submissions ORDER BY id DESC",
+  "query": "SELECT id, title, description, author, email, link, created_at, reviewed_at\n         FROM submissions ORDER BY id ASC",
   "describe": {
     "columns": [
       {
@@ -58,5 +58,5 @@
       true
     ]
   },
-  "hash": "f5b63512fda6344e8d598de8e0e5a647119bf1cbf247f4ee2afccddc56b3d380"
+  "hash": "75a830e2dd0b6af609eb348e975f0ed4ddad3ff3def22960ae665219234bb0f0"
 }

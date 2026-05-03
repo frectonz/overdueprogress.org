@@ -383,7 +383,7 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
     let rows = sqlx::query_as!(
         SubmissionRow,
         "SELECT id, title, description, author, email, link, created_at, reviewed_at
-         FROM submissions ORDER BY id DESC",
+         FROM submissions ORDER BY id ASC",
     )
     .fetch_all(&state.db)
     .await?;
