@@ -4,6 +4,7 @@ use std::sync::Arc;
 use axum::{
     Form, Router,
     extract::{Path, State},
+    http::StatusCode,
     response::{IntoResponse, Redirect, Response},
     routing::{get, post},
 };
@@ -53,6 +54,15 @@ pub fn routes() -> Router<AppState> {
             .expect("valid edit rate limiter"),
     ));
 
+    let review_limit = GovernorLayer::new(Arc::new(
+        GovernorConfigBuilder::default()
+            .key_extractor(SmartIpKeyExtractor)
+            .per_second(1)
+            .burst_size(10)
+            .finish()
+            .expect("valid review rate limiter"),
+    ));
+
     Router::new()
         .route(
             "/submit",
@@ -67,6 +77,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/admin/submissions/{id}/edit",
             get(edit_page).post(edit_handler).layer(edit_limit.clone()),
+        )
+        .route(
+            "/admin/submissions/{id}/review",
+            post(review_submission).layer(review_limit),
         )
         .route("/admin/submissions/{id}/history", get(history_page))
         .route(
@@ -321,6 +335,7 @@ struct SubmissionRow {
     email: String,
     link: String,
     created_at: String,
+    reviewed_at: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -339,11 +354,13 @@ struct AdminRow<'a> {
     desc_words: usize,
     is_duplicate_author: bool,
     is_recent: bool,
+    reviewed: bool,
 }
 
 #[derive(Serialize, Default)]
 struct AdminStats {
     total: usize,
+    unreviewed: usize,
     last_24h: usize,
     final_24h: usize,
     edits_total: i64,
@@ -365,7 +382,7 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
 
     let rows = sqlx::query_as!(
         SubmissionRow,
-        "SELECT id, title, description, author, email, link, created_at
+        "SELECT id, title, description, author, email, link, created_at, reviewed_at
          FROM submissions ORDER BY id DESC",
     )
     .fetch_all(&state.db)
@@ -474,12 +491,15 @@ fn admin_context(
                 desc_words,
                 is_duplicate_author: is_dup,
                 is_recent,
+                reviewed: r.reviewed_at.is_some(),
             }
         })
         .collect();
 
+    let unreviewed = rows.iter().filter(|r| r.reviewed_at.is_none()).count();
     let stats = AdminStats {
         total: rows.len(),
+        unreviewed,
         last_24h,
         final_24h,
         edits_total,
@@ -516,6 +536,62 @@ fn link_domain(link: &str) -> Option<String> {
     let url = Url::parse(link.trim()).ok()?;
     let host = url.host_str()?.to_lowercase();
     Some(host.trim_start_matches("www.").to_string())
+}
+
+#[derive(Deserialize)]
+struct ReviewForm {
+    csrf_token: String,
+    state: String,
+}
+
+async fn review_submission(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(id): Path<i64>,
+    Form(form): Form<ReviewForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!(id, "review submission denied: no session");
+        return Ok(redirect);
+    }
+
+    let Some(expected) = auth::current_csrf_token(&state.db, &jar).await else {
+        tracing::warn!(id, "review submission denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if form.csrf_token != expected {
+        tracing::warn!(id, "review submission denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    }
+
+    let mark_read = match form.state.as_str() {
+        "read" => true,
+        "unread" => false,
+        _ => return Err(AppError::BadRequest("invalid review state")),
+    };
+
+    let result = if mark_read {
+        sqlx::query!(
+            "UPDATE submissions
+               SET reviewed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+             WHERE id = ?",
+            id
+        )
+        .execute(&state.db)
+        .await?
+    } else {
+        sqlx::query!("UPDATE submissions SET reviewed_at = NULL WHERE id = ?", id)
+            .execute(&state.db)
+            .await?
+    };
+
+    if result.rows_affected() == 0 {
+        tracing::warn!(id, "review submission: no such row");
+    } else {
+        tracing::info!(id, mark_read, "submission review state updated");
+    }
+
+    Ok(StatusCode::NO_CONTENT.into_response())
 }
 
 #[derive(Deserialize)]
@@ -749,7 +825,7 @@ async fn history_page(
 
     let row = sqlx::query_as!(
         SubmissionRow,
-        "SELECT id, title, description, author, email, link, created_at
+        "SELECT id, title, description, author, email, link, created_at, reviewed_at
          FROM submissions WHERE id = ?",
         id,
     )

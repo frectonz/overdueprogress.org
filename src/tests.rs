@@ -386,11 +386,12 @@ async fn admin_template_renders_directly() {
         desc_words => 2i64,
         is_duplicate_author => true,
         is_recent => true,
+        reviewed => false,
     };
     let ctx = context! {
         rows => vec![row],
         stats => context! {
-            total => 1i64, last_24h => 1i64, final_24h => 0i64,
+            total => 1i64, unreviewed => 1i64, last_24h => 1i64, final_24h => 0i64,
             edits_total => 1i64, submissions_edited => 1i64,
             distinct_authors => 1i64, distinct_email_domains => 1i64,
             distinct_link_domains => 1i64, duplicate_authors => 0i64,
@@ -570,6 +571,115 @@ async fn delete_succeeds_with_valid_csrf_token() {
         .await
         .unwrap();
     assert_eq!(count, 0);
+}
+
+#[tokio::test]
+async fn review_marks_and_unmarks_submission() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('t', 'd', 'a', 'a@b.co', 'https://a.b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let mark_read = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/review")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[("csrf_token", "good-csrf"), ("state", "read")]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(mark_read.status(), StatusCode::NO_CONTENT);
+    let (after_read,): (Option<String>,) =
+        sqlx::query_as("SELECT reviewed_at FROM submissions WHERE id = 1")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert!(after_read.is_some(), "reviewed_at should be set");
+
+    let mark_unread = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/review")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[
+                    ("csrf_token", "good-csrf"),
+                    ("state", "unread"),
+                ]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(mark_unread.status(), StatusCode::NO_CONTENT);
+    let (after_unread,): (Option<String>,) =
+        sqlx::query_as("SELECT reviewed_at FROM submissions WHERE id = 1")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert!(after_unread.is_none(), "reviewed_at should be cleared");
+}
+
+#[tokio::test]
+async fn review_rejects_bad_csrf_token() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('t', 'd', 'a', 'a@b.co', 'https://a.b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let db = state.db.clone();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/admin/submissions/1/review")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(form_body(&[("csrf_token", "wrong"), ("state", "read")]))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    let (after,): (Option<String>,) =
+        sqlx::query_as("SELECT reviewed_at FROM submissions WHERE id = 1")
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert!(after.is_none());
 }
 
 async fn seed_submission_and_session(db: &SqlitePool) {

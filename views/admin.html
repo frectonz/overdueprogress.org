@@ -84,7 +84,7 @@
       /* Stat strip */
       .stats {
         display: grid;
-        grid-template-columns: repeat(8, minmax(0, 1fr));
+        grid-template-columns: repeat(9, minmax(0, 1fr));
         gap: 1px;
         background: var(--rule);
         border: 1px solid var(--rule);
@@ -92,10 +92,13 @@
         overflow: hidden;
         margin-bottom: 20px;
       }
-      @media (max-width: 980px) {
-        .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      @media (max-width: 1180px) {
+        .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       }
-      @media (max-width: 540px) {
+      @media (max-width: 720px) {
+        .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+      @media (max-width: 480px) {
         .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
       .stat { background: var(--card); padding: 10px 12px; }
@@ -299,6 +302,30 @@
       .badge.dup { background: var(--warn-bg); color: var(--warn); }
       .badge.recent { background: var(--accent-soft); color: var(--accent); }
       .badge.edits { background: #f0eee5; color: var(--ink); font-weight: 600; }
+      .badge.read { background: #ebf3ea; color: #4a6b3f; }
+
+      /* Read / unread row treatment */
+      .unread-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        background: var(--accent);
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: 1px;
+      }
+      table.subs tbody tr.row[data-reviewed="0"] td.title .t {
+        font-weight: 700;
+      }
+      table.subs tbody tr.row[data-reviewed="1"] td.num,
+      table.subs tbody tr.row[data-reviewed="1"] td.author,
+      table.subs tbody tr.row[data-reviewed="1"] td.title .t,
+      table.subs tbody tr.row[data-reviewed="1"] td.email {
+        color: var(--soft);
+      }
+      table.subs tbody tr.row[data-reviewed="1"] td.title .t {
+        font-weight: 500;
+      }
 
       /* Detail panel */
       aside.detail {
@@ -423,6 +450,27 @@
         border-color: #cfd8eb;
         background: var(--accent-soft);
       }
+      aside.detail footer.actions button.review-toggle {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      aside.detail footer.actions button.review-toggle:hover {
+        background: #082b65;
+        border-color: #082b65;
+      }
+      aside.detail footer.actions button.review-toggle[data-reviewed="1"] {
+        background: var(--card);
+        color: var(--muted);
+        border-color: var(--rule);
+        font-weight: 400;
+      }
+      aside.detail footer.actions button.review-toggle[data-reviewed="1"]:hover {
+        color: var(--ink);
+        border-color: #bdbdbd;
+      }
+      aside.detail footer.actions button.review-toggle[disabled] { opacity: 0.6; cursor: progress; }
       aside.detail footer.actions button.delete {
         color: var(--danger);
         margin-left: auto;
@@ -449,7 +497,7 @@
       .no-match.show { display: block; }
     </style>
   </head>
-  <body>
+  <body data-csrf="{{ csrf_token }}">
     <main>
       <header class="page">
         <h1>Submissions</h1>
@@ -467,6 +515,11 @@
           <div class="label">Total</div>
           <div class="value">{{ stats.total }}</div>
           <div class="sub">submission{{ "s" if stats.total != 1 else "" }}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Unread</div>
+          <div class="value" id="stat-unread">{{ stats.unreviewed }}</div>
+          <div class="sub">to review</div>
         </div>
         <div class="stat">
           <div class="label">Last 24h</div>
@@ -514,6 +567,7 @@
         />
         <div class="filter-chips" role="group" aria-label="Quick filters">
           <button class="chip active" data-filter="all" type="button">All</button>
+          <button class="chip" data-filter="unread" type="button">Unread</button>
           <button class="chip" data-filter="recent" type="button">Last 24h</button>
           <button class="chip" data-filter="dup" type="button">Duplicates</button>
           <button class="chip" data-filter="edited" type="button">Edited</button>
@@ -550,9 +604,12 @@
                   data-edits="{{ r.edits }}"
                   data-recent="{{ '1' if r.is_recent else '0' }}"
                   data-dup="{{ '1' if r.is_duplicate_author else '0' }}"
+                  data-reviewed="{{ '1' if r.reviewed else '0' }}"
                   data-search="{{ r.title | lower }} {{ r.author | lower }} {{ r.email | lower }} {{ r.link_domain }} {{ r.email_domain }} {{ r.description | lower }}"
                 >
-                  <td class="num">#{{ r.id }}</td>
+                  <td class="num">
+                    {% if not r.reviewed %}<span class="unread-dot" aria-label="unread"></span>{% endif %}#{{ r.id }}
+                  </td>
                   <td class="when">
                     <time datetime="{{ r.created_at }}" title="{{ r.created_at }}">{{ r.created_at }}</time>
                     {% if r.is_recent %}<span class="badge recent">new</span>{% endif %}
@@ -622,6 +679,14 @@
               <div class="desc">{{ r.description }}</div>
             </div>
             <footer class="actions">
+              <button
+                class="review-toggle"
+                type="button"
+                data-id="{{ r.id }}"
+                data-reviewed="{{ '1' if r.reviewed else '0' }}"
+              >
+                {% if r.reviewed %}Mark as unread{% else %}Mark as read{% endif %}
+              </button>
               <a class="primary" href="{{ r.link }}" target="_blank" rel="noopener">Open essay</a>
               <a href="/admin/submissions/{{ r.id }}/edit">Edit</a>
               <a href="/admin/submissions/{{ r.id }}/history">History</a>
@@ -684,6 +749,30 @@
           return rows.filter((r) => r.style.display !== "none");
         }
 
+        const statUnread = document.getElementById("stat-unread");
+
+        function applyReviewState(row, reviewed) {
+          row.dataset.reviewed = reviewed ? "1" : "0";
+          // Toggle the unread dot in the ID cell.
+          const numCell = row.querySelector("td.num");
+          if (numCell) {
+            const existing = numCell.querySelector(".unread-dot");
+            if (reviewed && existing) existing.remove();
+            else if (!reviewed && !existing) {
+              const dot = document.createElement("span");
+              dot.className = "unread-dot";
+              dot.setAttribute("aria-label", "unread");
+              numCell.insertBefore(dot, numCell.firstChild);
+            }
+          }
+          if (statUnread) {
+            const unread = rows.filter((r) => r.dataset.reviewed === "0").length;
+            statUnread.textContent = unread;
+          }
+          // Re-apply filter in case the unread chip is active.
+          applyFilter();
+        }
+
         function clearSelection() {
           if (selectedRow) selectedRow.classList.remove("selected");
           selectedRow = null;
@@ -730,6 +819,36 @@
           const closeBtn = detail.querySelector("[data-close]");
           if (closeBtn) closeBtn.addEventListener("click", clearSelection);
 
+          const reviewBtn = detail.querySelector(".review-toggle");
+          if (reviewBtn) {
+            reviewBtn.addEventListener("click", async () => {
+              const id = reviewBtn.dataset.id;
+              const currentlyRead = reviewBtn.dataset.reviewed === "1";
+              const target = currentlyRead ? "unread" : "read";
+              reviewBtn.disabled = true;
+              try {
+                const params = new URLSearchParams();
+                params.append("csrf_token", document.body.dataset.csrf || "");
+                params.append("state", target);
+                const res = await fetch("/admin/submissions/" + id + "/review", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: params.toString(),
+                  credentials: "same-origin",
+                });
+                if (!res.ok) throw new Error("review failed " + res.status);
+                applyReviewState(row, target === "read");
+                reviewBtn.dataset.reviewed = target === "read" ? "1" : "0";
+                reviewBtn.textContent = target === "read" ? "Mark as unread" : "Mark as read";
+              } catch (err) {
+                console.error(err);
+                alert("Could not update review state. Try again.");
+              } finally {
+                reviewBtn.disabled = false;
+              }
+            });
+          }
+
           const r = row.getBoundingClientRect();
           if (r.top < 80 || r.bottom > window.innerHeight - 20) {
             row.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -763,6 +882,7 @@
             if (activeChip === "recent") matchesChip = row.dataset.recent === "1";
             else if (activeChip === "dup") matchesChip = row.dataset.dup === "1";
             else if (activeChip === "edited") matchesChip = parseInt(row.dataset.edits, 10) > 0;
+            else if (activeChip === "unread") matchesChip = row.dataset.reviewed === "0";
             const show = matchesText && matchesChip;
             row.style.display = show ? "" : "none";
             if (show) shown++;

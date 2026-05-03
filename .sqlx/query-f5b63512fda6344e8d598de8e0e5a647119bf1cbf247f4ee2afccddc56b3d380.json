@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, title, description, author, email, link, created_at\n         FROM submissions ORDER BY id DESC",
+  "query": "SELECT id, title, description, author, email, link, created_at, reviewed_at\n         FROM submissions ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -37,6 +37,11 @@
         "name": "created_at",
         "ordinal": 6,
         "type_info": "Text"
+      },
+      {
+        "name": "reviewed_at",
+        "ordinal": 7,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -49,8 +54,9 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "9a24f1947876480574320159bb38126614cf635ead604678f6da0ad3d571ab9e"
+  "hash": "f5b63512fda6344e8d598de8e0e5a647119bf1cbf247f4ee2afccddc56b3d380"
 }
