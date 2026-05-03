@@ -385,17 +385,15 @@ async fn admin_template_renders_directly() {
         edits => 1i64,
         desc_words => 2i64,
         is_duplicate_author => true,
-        is_recent => true,
         reviewed => false,
     };
     let ctx = context! {
         rows => vec![row],
         stats => context! {
-            total => 1i64, unreviewed => 1i64, last_24h => 1i64, final_24h => 0i64,
+            total => 1i64, unreviewed => 1i64, reviewed => 0i64,
             edits_total => 1i64, submissions_edited => 1i64,
             distinct_authors => 1i64, distinct_email_domains => 1i64,
             distinct_link_domains => 1i64, duplicate_authors => 0i64,
-            last_at => Option::<String>::None,
         },
         csrf_token => "tok",
     };

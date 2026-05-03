@@ -11,10 +11,7 @@ use axum::{
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::{Value, context};
 use serde::{Deserialize, Serialize};
-use time::{
-    Duration as TimeDuration, OffsetDateTime, format_description::well_known::Iso8601,
-    macros::datetime,
-};
+use time::{OffsetDateTime, macros::datetime};
 use tower_governor::{
     GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
 };
@@ -353,23 +350,20 @@ struct AdminRow<'a> {
     edits: i64,
     desc_words: usize,
     is_duplicate_author: bool,
-    is_recent: bool,
     reviewed: bool,
 }
 
 #[derive(Serialize, Default)]
 struct AdminStats {
     total: usize,
+    reviewed: usize,
     unreviewed: usize,
-    last_24h: usize,
-    final_24h: usize,
     edits_total: i64,
     submissions_edited: i64,
     distinct_authors: usize,
     distinct_email_domains: usize,
     distinct_link_domains: usize,
     duplicate_authors: usize,
-    last_at: Option<String>,
 }
 
 async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Response, AppError> {
@@ -421,10 +415,6 @@ fn admin_context(
     submissions_edited: i64,
     csrf_token: Option<&str>,
 ) -> Value {
-    let now = OffsetDateTime::now_utc();
-    let cutoff_24h = now - TimeDuration::hours(24);
-    let cutoff_final = DEADLINE - TimeDuration::hours(24);
-
     let mut author_counts: HashMap<String, usize> = HashMap::new();
     for r in rows {
         let key = r.author.trim().to_lowercase();
@@ -435,9 +425,6 @@ fn admin_context(
 
     let mut email_domain_set: HashSet<String> = HashSet::new();
     let mut link_domain_set: HashSet<String> = HashSet::new();
-    let mut last_24h = 0usize;
-    let mut final_24h = 0usize;
-    let mut last_at: Option<&str> = None;
 
     let admin_rows: Vec<AdminRow> = rows
         .iter()
@@ -449,23 +436,6 @@ fn admin_context(
             }
             if !link_domain.is_empty() {
                 link_domain_set.insert(link_domain.clone());
-            }
-
-            let ts = OffsetDateTime::parse(&r.created_at, &Iso8601::DEFAULT).ok();
-            let mut is_recent = false;
-            if let Some(t) = ts {
-                if t >= cutoff_24h {
-                    last_24h += 1;
-                    is_recent = true;
-                }
-                if t >= cutoff_final {
-                    final_24h += 1;
-                }
-            }
-            match last_at {
-                None => last_at = Some(&r.created_at),
-                Some(prev) if r.created_at.as_str() > prev => last_at = Some(&r.created_at),
-                _ => {}
             }
 
             let author_key = r.author.trim().to_lowercase();
@@ -490,25 +460,22 @@ fn admin_context(
                 edits: edits_by_id.get(&r.id).copied().unwrap_or(0),
                 desc_words,
                 is_duplicate_author: is_dup,
-                is_recent,
                 reviewed: r.reviewed_at.is_some(),
             }
         })
         .collect();
 
-    let unreviewed = rows.iter().filter(|r| r.reviewed_at.is_none()).count();
+    let reviewed = rows.iter().filter(|r| r.reviewed_at.is_some()).count();
     let stats = AdminStats {
         total: rows.len(),
-        unreviewed,
-        last_24h,
-        final_24h,
+        reviewed,
+        unreviewed: rows.len() - reviewed,
         edits_total,
         submissions_edited,
         distinct_authors: author_counts.len(),
         distinct_email_domains: email_domain_set.len(),
         distinct_link_domains: link_domain_set.len(),
         duplicate_authors: author_counts.values().filter(|&&c| c > 1).count(),
-        last_at: last_at.map(str::to_string),
     };
 
     context! { rows => admin_rows, stats => stats, csrf_token => csrf_token }
