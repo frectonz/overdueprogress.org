@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use axum::{
@@ -9,10 +10,14 @@ use axum::{
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::{Value, context};
 use serde::{Deserialize, Serialize};
-use time::{OffsetDateTime, macros::datetime};
+use time::{
+    Duration as TimeDuration, OffsetDateTime, format_description::well_known::Iso8601,
+    macros::datetime,
+};
 use tower_governor::{
     GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
 };
+use url::Url;
 
 use crate::AppState;
 use crate::auth;
@@ -318,6 +323,38 @@ struct SubmissionRow {
     created_at: String,
 }
 
+#[derive(Serialize)]
+struct AdminRow<'a> {
+    id: i64,
+    title: &'a str,
+    description: &'a str,
+    description_preview: String,
+    author: &'a str,
+    email: &'a str,
+    link: &'a str,
+    created_at: &'a str,
+    email_domain: String,
+    link_domain: String,
+    edits: i64,
+    desc_words: usize,
+    is_duplicate_author: bool,
+    is_recent: bool,
+}
+
+#[derive(Serialize, Default)]
+struct AdminStats {
+    total: usize,
+    last_24h: usize,
+    final_24h: usize,
+    edits_total: i64,
+    submissions_edited: i64,
+    distinct_authors: usize,
+    distinct_email_domains: usize,
+    distinct_link_domains: usize,
+    duplicate_authors: usize,
+    last_at: Option<String>,
+}
+
 async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Response, AppError> {
     if let Some(redirect) = auth::require_session(&state, &jar).await {
         tracing::debug!("admin page accessed without session; redirecting");
@@ -334,14 +371,151 @@ async fn admin_page(State(state): State<AppState>, jar: CookieJar) -> Result<Res
     .fetch_all(&state.db)
     .await?;
 
+    let edit_rows = sqlx::query!(
+        r#"SELECT submission_id AS "submission_id!: i64", COUNT(*) AS "n!: i64"
+           FROM submission_edits GROUP BY submission_id"#
+    )
+    .fetch_all(&state.db)
+    .await?;
+    let edits_total: i64 = edit_rows.iter().map(|r| r.n).sum();
+    let submissions_edited: i64 = edit_rows.len() as i64;
+    let edits_by_id: HashMap<i64, i64> = edit_rows
+        .into_iter()
+        .map(|r| (r.submission_id, r.n))
+        .collect();
+
     tracing::info!(count = rows.len(), "admin page rendered");
-    Ok(state
-        .view
-        .render("admin.html", admin_context(&rows, csrf_token.as_deref())))
+    Ok(state.view.render(
+        "admin.html",
+        admin_context(
+            &rows,
+            &edits_by_id,
+            edits_total,
+            submissions_edited,
+            csrf_token.as_deref(),
+        ),
+    ))
 }
 
-fn admin_context(rows: &[SubmissionRow], csrf_token: Option<&str>) -> Value {
-    context! { rows => rows, csrf_token => csrf_token }
+fn admin_context(
+    rows: &[SubmissionRow],
+    edits_by_id: &HashMap<i64, i64>,
+    edits_total: i64,
+    submissions_edited: i64,
+    csrf_token: Option<&str>,
+) -> Value {
+    let now = OffsetDateTime::now_utc();
+    let cutoff_24h = now - TimeDuration::hours(24);
+    let cutoff_final = DEADLINE - TimeDuration::hours(24);
+
+    let mut author_counts: HashMap<String, usize> = HashMap::new();
+    for r in rows {
+        let key = r.author.trim().to_lowercase();
+        if !key.is_empty() {
+            *author_counts.entry(key).or_insert(0) += 1;
+        }
+    }
+
+    let mut email_domain_set: HashSet<String> = HashSet::new();
+    let mut link_domain_set: HashSet<String> = HashSet::new();
+    let mut last_24h = 0usize;
+    let mut final_24h = 0usize;
+    let mut last_at: Option<&str> = None;
+
+    let admin_rows: Vec<AdminRow> = rows
+        .iter()
+        .map(|r| {
+            let email_domain = email_domain(&r.email).unwrap_or_default();
+            let link_domain = link_domain(&r.link).unwrap_or_default();
+            if !email_domain.is_empty() {
+                email_domain_set.insert(email_domain.clone());
+            }
+            if !link_domain.is_empty() {
+                link_domain_set.insert(link_domain.clone());
+            }
+
+            let ts = OffsetDateTime::parse(&r.created_at, &Iso8601::DEFAULT).ok();
+            let mut is_recent = false;
+            if let Some(t) = ts {
+                if t >= cutoff_24h {
+                    last_24h += 1;
+                    is_recent = true;
+                }
+                if t >= cutoff_final {
+                    final_24h += 1;
+                }
+            }
+            match last_at {
+                None => last_at = Some(&r.created_at),
+                Some(prev) if r.created_at.as_str() > prev => last_at = Some(&r.created_at),
+                _ => {}
+            }
+
+            let author_key = r.author.trim().to_lowercase();
+            let is_dup = author_counts.get(&author_key).copied().unwrap_or(0) > 1;
+            let desc_words = r
+                .description
+                .split_whitespace()
+                .filter(|w| !w.is_empty())
+                .count();
+
+            AdminRow {
+                id: r.id,
+                title: &r.title,
+                description: &r.description,
+                description_preview: preview(&r.description, 120),
+                author: &r.author,
+                email: &r.email,
+                link: &r.link,
+                created_at: &r.created_at,
+                email_domain,
+                link_domain,
+                edits: edits_by_id.get(&r.id).copied().unwrap_or(0),
+                desc_words,
+                is_duplicate_author: is_dup,
+                is_recent,
+            }
+        })
+        .collect();
+
+    let stats = AdminStats {
+        total: rows.len(),
+        last_24h,
+        final_24h,
+        edits_total,
+        submissions_edited,
+        distinct_authors: author_counts.len(),
+        distinct_email_domains: email_domain_set.len(),
+        distinct_link_domains: link_domain_set.len(),
+        duplicate_authors: author_counts.values().filter(|&&c| c > 1).count(),
+        last_at: last_at.map(str::to_string),
+    };
+
+    context! { rows => admin_rows, stats => stats, csrf_token => csrf_token }
+}
+
+fn preview(text: &str, max_chars: usize) -> String {
+    let collapsed: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    if collapsed.chars().count() <= max_chars {
+        return collapsed;
+    }
+    let truncated: String = collapsed.chars().take(max_chars).collect();
+    format!("{}…", truncated.trim_end())
+}
+
+fn email_domain(email: &str) -> Option<String> {
+    let (_, domain) = email.trim().split_once('@')?;
+    let domain = domain.trim().trim_end_matches('.').to_lowercase();
+    if domain.is_empty() || !domain.contains('.') {
+        return None;
+    }
+    Some(domain)
+}
+
+fn link_domain(link: &str) -> Option<String> {
+    let url = Url::parse(link.trim()).ok()?;
+    let host = url.host_str()?.to_lowercase();
+    Some(host.trim_start_matches("www.").to_string())
 }
 
 #[derive(Deserialize)]

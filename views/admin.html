@@ -14,57 +14,56 @@
       :root {
         --ink: #1a1a1a;
         --muted: #6b6b6b;
+        --soft: #8a8a8a;
         --rule: #e6e6e6;
+        --rule-strong: #d6d6d6;
         --bg: #fafaf8;
         --card: #ffffff;
+        --row-alt: #fbfaf6;
+        --row-hover: #f3f0e8;
+        --row-selected: #e9eef9;
         --accent: #0b3d91;
+        --accent-soft: #e9eef9;
+        --warn: #8a5a00;
+        --warn-bg: #fff4d8;
+        --danger: #a33;
       }
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
         background: var(--bg);
         color: var(--ink);
         font-family: "Source Serif 4", Georgia, serif;
-        font-size: 17px;
-        line-height: 1.6;
+        font-size: 15px;
+        line-height: 1.5;
       }
       main {
-        max-width: 820px;
+        max-width: 1400px;
         margin: 0 auto;
-        padding: 56px 24px 120px;
+        padding: 32px 20px 96px;
       }
+
       header.page {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
         gap: 16px;
         border-bottom: 1px solid var(--rule);
-        padding-bottom: 20px;
-        margin-bottom: 32px;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
       }
       header.page h1 {
-        font-size: 30px;
+        font-size: 26px;
         font-weight: 700;
         margin: 0;
         letter-spacing: -0.01em;
       }
-      header.page .count {
-        color: var(--muted);
-        font-size: 14px;
-        font-variant-numeric: tabular-nums;
-      }
       header.page .right {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 8px;
       }
-      .logout {
-        margin: 0;
-      }
-      .logout button,
-      header.page a.nav {
+      .btn {
         font-family: inherit;
         font-size: 13px;
         color: var(--muted);
@@ -74,116 +73,339 @@
         border-radius: 4px;
         cursor: pointer;
         text-decoration: none;
+        line-height: 1.2;
       }
-      .logout button:hover,
-      header.page a.nav:hover {
+      .btn:hover {
         color: var(--ink);
         border-color: #bdbdbd;
       }
-      .empty {
-        color: var(--muted);
-        font-style: italic;
-        margin-top: 60px;
-        text-align: center;
+      form.inline { margin: 0; display: inline; }
+
+      /* Stat strip */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--rule);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 20px;
       }
-      article.submission {
+      @media (max-width: 980px) {
+        .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      }
+      @media (max-width: 540px) {
+        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      .stat { background: var(--card); padding: 10px 12px; }
+      .stat .label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .stat .value {
+        font-size: 22px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.15;
+        margin-top: 2px;
+      }
+      .stat .sub {
+        font-size: 12px;
+        color: var(--soft);
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Toolbar */
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .toolbar input[type="search"] {
+        font-family: inherit;
+        font-size: 14px;
+        padding: 7px 10px;
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        background: var(--card);
+        flex: 1 1 280px;
+        min-width: 200px;
+      }
+      .toolbar input[type="search"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .toolbar .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip {
+        font-size: 12px;
+        color: var(--muted);
+        background: var(--card);
+        border: 1px solid var(--rule);
+        padding: 5px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-family: inherit;
+        font-variant-numeric: tabular-nums;
+      }
+      .chip:hover { border-color: #bdbdbd; color: var(--ink); }
+      .chip.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .toolbar .visible-count {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .toolbar .hint {
+        font-size: 12px;
+        color: var(--soft);
+        font-variant-numeric: tabular-nums;
+      }
+      kbd {
+        font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        background: #f0eee5;
+        border: 1px solid var(--rule);
+        border-bottom-width: 2px;
+        border-radius: 3px;
+        padding: 1px 4px;
+        color: var(--ink);
+      }
+
+      /* Layout: table + sticky detail panel */
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 18px;
+        align-items: start;
+      }
+      @media (max-width: 1100px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      /* Table */
+      .table-wrap {
         background: var(--card);
         border: 1px solid var(--rule);
         border-radius: 6px;
-        padding: 24px 28px;
-        margin-bottom: 18px;
-        transition: border-color 0.15s ease;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-      article.submission:hover {
-        border-color: #bdbdbd;
+      table.subs {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+        font-size: 13.5px;
       }
-      article.submission h2 {
-        font-size: 22px;
+      table.subs thead th {
+        background: #f5f3ec;
+        text-align: left;
         font-weight: 600;
-        margin: 0 0 8px;
-        line-height: 1.3;
-        letter-spacing: -0.005em;
-      }
-      .meta {
-        font-size: 14px;
-        color: var(--muted);
-        margin: 0 0 14px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px 12px;
-        align-items: center;
-      }
-      .meta .sep {
-        color: #c4c4c4;
-      }
-      .meta .id {
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 12px;
-        color: #999;
-        margin-left: auto;
-      }
-      .meta time {
-        font-variant-numeric: tabular-nums;
-      }
-      .meta a {
-        color: var(--muted);
-        text-decoration: none;
-        border-bottom: 1px dotted #c4c4c4;
-      }
-      .meta a:hover {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-      }
-      .description {
-        margin: 0 0 18px;
-        color: #3a3a3a;
-        white-space: pre-wrap;
-      }
-      .link-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding-top: 14px;
-        border-top: 1px solid var(--rule);
-      }
-      .link-row .label {
-        font-size: 13px;
-        color: var(--muted);
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--rule-strong);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
       }
-      .link-row .link-wrap {
-        flex: 1;
-        min-width: 0;
+      table.subs thead th[data-sort]:hover { color: var(--ink); }
+      table.subs thead th .arrow {
+        opacity: 0;
+        margin-left: 4px;
+        font-size: 10px;
+      }
+      table.subs thead th.sort-asc .arrow,
+      table.subs thead th.sort-desc .arrow { opacity: 1; }
+
+      table.subs tbody tr.row {
+        border-top: 1px solid var(--rule);
+        cursor: pointer;
+      }
+      table.subs tbody tr.row:nth-child(odd) { background: var(--row-alt); }
+      table.subs tbody tr.row:hover { background: var(--row-hover); }
+      table.subs tbody tr.row.selected,
+      table.subs tbody tr.row.selected:hover {
+        background: var(--row-selected);
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+
+      table.subs td {
+        padding: 8px 10px;
+        vertical-align: top;
+      }
+      table.subs td.num {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      table.subs td.title { font-weight: 600; max-width: 380px; }
+      table.subs td.title .t {
+        display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .link-row a.essay-link {
-        font-size: 15px;
-        color: var(--accent);
-        text-decoration: underline;
-        text-decoration-color: #cfd8eb;
-        text-underline-offset: 3px;
+      table.subs td.title .desc-preview {
+        display: block;
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 2px;
       }
-      .link-row a.essay-link:hover {
-        text-decoration-color: var(--accent);
+      table.subs td.author { white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+      table.subs td.email { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; color: var(--muted); }
+      table.subs td.email a { color: inherit; text-decoration: none; border-bottom: 1px dotted #c4c4c4; }
+      table.subs td.email a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+      table.subs td.domain { font-size: 12px; color: var(--muted); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+      table.subs td.domain a { color: var(--accent); text-decoration: none; }
+      table.subs td.domain a:hover { text-decoration: underline; }
+      table.subs td.when {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-size: 12.5px;
+        color: var(--muted);
       }
-      .actions {
-        margin-left: auto;
+      table.subs td.center { text-align: center; font-variant-numeric: tabular-nums; }
+
+      .badge {
+        display: inline-block;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 1px 6px;
+        border-radius: 3px;
+        margin-left: 6px;
+        vertical-align: 1px;
+      }
+      .badge.dup { background: var(--warn-bg); color: var(--warn); }
+      .badge.recent { background: var(--accent-soft); color: var(--accent); }
+      .badge.edits { background: #f0eee5; color: var(--ink); font-weight: 600; }
+
+      /* Detail panel */
+      aside.detail {
+        position: sticky;
+        top: 18px;
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        max-height: calc(100vh - 36px);
         display: flex;
-        gap: 8px;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      aside.detail .empty-state {
+        padding: 28px 22px;
+        color: var(--muted);
+        font-style: italic;
+        font-size: 14px;
+      }
+      aside.detail .empty-state .kbd-hint {
+        margin-top: 12px;
+        font-style: normal;
+        font-size: 12.5px;
+        color: var(--soft);
+        line-height: 1.9;
+      }
+      aside.detail header.dh {
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--rule);
+        background: linear-gradient(180deg, #fdfdfa, var(--card));
+      }
+      aside.detail header.dh .meta-line {
+        font-size: 11.5px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 6px;
+        display: flex;
         align-items: center;
+        gap: 8px;
       }
-      .actions form {
-        margin: 0;
-      }
-      .actions a,
-      .actions button {
-        font-family: inherit;
-        font-size: 13px;
+      aside.detail header.dh .close {
+        margin-left: auto;
+        cursor: pointer;
         background: transparent;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 11px;
+        color: var(--muted);
+        font-family: inherit;
+      }
+      aside.detail header.dh .close:hover { color: var(--ink); border-color: #bdbdbd; }
+      aside.detail header.dh h2 {
+        font-size: 19px;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.3;
+        letter-spacing: -0.005em;
+      }
+      aside.detail .body {
+        padding: 14px 20px 18px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+      }
+      aside.detail dl.meta {
+        margin: 0 0 16px;
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 4px 12px;
+        font-size: 13px;
+      }
+      aside.detail dl.meta dt { color: var(--muted); }
+      aside.detail dl.meta dd { margin: 0; word-break: break-word; }
+      aside.detail dl.meta dd a { color: var(--accent); text-decoration: none; }
+      aside.detail dl.meta dd a:hover { text-decoration: underline; }
+      aside.detail .desc-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 0 0 6px;
+      }
+      aside.detail .desc {
+        white-space: pre-wrap;
+        font-size: 15px;
+        line-height: 1.65;
+        color: #2a2a2a;
+        padding: 12px 14px;
+        background: #fbfaf6;
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+      }
+      aside.detail footer.actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 12px 20px;
+        border-top: 1px solid var(--rule);
+        background: #fdfdfa;
+      }
+      aside.detail footer.actions a,
+      aside.detail footer.actions button {
+        font-family: inherit;
+        font-size: 12.5px;
+        background: var(--card);
         border: 1px solid var(--rule);
         padding: 6px 12px;
         border-radius: 4px;
@@ -192,17 +414,39 @@
         text-decoration: none;
         line-height: 1.2;
       }
-      .actions a:hover {
+      aside.detail footer.actions a:hover,
+      aside.detail footer.actions button:hover {
         border-color: #bdbdbd;
       }
-      .actions button.delete {
-        color: #a33;
+      aside.detail footer.actions a.primary {
+        color: var(--accent);
+        border-color: #cfd8eb;
+        background: var(--accent-soft);
       }
-      .actions button.delete:hover {
+      aside.detail footer.actions button.delete {
+        color: var(--danger);
+        margin-left: auto;
+      }
+      aside.detail footer.actions button.delete:hover {
         color: #fff;
-        background: #a33;
-        border-color: #a33;
+        background: var(--danger);
+        border-color: var(--danger);
       }
+
+      .empty {
+        color: var(--muted);
+        font-style: italic;
+        margin: 60px 0;
+        text-align: center;
+      }
+      .no-match {
+        display: none;
+        color: var(--muted);
+        font-style: italic;
+        text-align: center;
+        padding: 32px 0;
+      }
+      .no-match.show { display: block; }
     </style>
   </head>
   <body>
@@ -210,89 +454,401 @@
       <header class="page">
         <h1>Submissions</h1>
         <div class="right">
-          <span class="count">
-            {{ rows | length }} {{ "entry" if rows | length == 1 else "entries" }}
-          </span>
-          <a class="nav" href="/admin/stats">Stats</a>
-          <form method="post" action="/admin/logout" class="logout">
-            <button type="submit">Sign out</button>
+          <a class="btn" href="/admin/stats">Stats</a>
+          <form method="post" action="/admin/logout" class="inline">
+            <button type="submit" class="btn">Sign out</button>
           </form>
         </div>
       </header>
 
       {% if rows %}
-        {% for r in rows %}
-          <article class="submission">
-            <h2>{{ r.title }}</h2>
-            <p class="meta">
-              <span class="author">{{ r.author }}</span>
-              <span class="sep">·</span>
-              <a href="mailto:{{ r.email }}">{{ r.email }}</a>
-              <span class="sep">·</span>
-              <time datetime="{{ r.created_at }}" title="{{ r.created_at }}"
-                >{{ r.created_at }}</time
-              >
-              <span class="id">#{{ r.id }}</span>
-            </p>
-            <p class="description">{{ r.description }}</p>
-            <div class="link-row">
-              <span class="label">Essay</span>
-              <span class="link-wrap">
-                <a
-                  class="essay-link"
-                  href="{{ r.link }}"
-                  target="_blank"
-                  rel="noopener"
-                  title="{{ r.link }}"
-                  >{{ r.link }}</a
+      <section class="stats">
+        <div class="stat">
+          <div class="label">Total</div>
+          <div class="value">{{ stats.total }}</div>
+          <div class="sub">submission{{ "s" if stats.total != 1 else "" }}</div>
+        </div>
+        <div class="stat">
+          <div class="label">Last 24h</div>
+          <div class="value">{{ stats.last_24h }}</div>
+          <div class="sub">since now</div>
+        </div>
+        <div class="stat">
+          <div class="label">Final 24h</div>
+          <div class="value">{{ stats.final_24h }}</div>
+          <div class="sub">before deadline</div>
+        </div>
+        <div class="stat">
+          <div class="label">Authors</div>
+          <div class="value">{{ stats.distinct_authors }}</div>
+          <div class="sub">distinct</div>
+        </div>
+        <div class="stat">
+          <div class="label">Duplicates</div>
+          <div class="value">{{ stats.duplicate_authors }}</div>
+          <div class="sub">authors with 2+</div>
+        </div>
+        <div class="stat">
+          <div class="label">Email domains</div>
+          <div class="value">{{ stats.distinct_email_domains }}</div>
+          <div class="sub">distinct</div>
+        </div>
+        <div class="stat">
+          <div class="label">Link domains</div>
+          <div class="value">{{ stats.distinct_link_domains }}</div>
+          <div class="sub">distinct</div>
+        </div>
+        <div class="stat">
+          <div class="label">Edits</div>
+          <div class="value">{{ stats.edits_total }}</div>
+          <div class="sub">on {{ stats.submissions_edited }} submission{{ "s" if stats.submissions_edited != 1 else "" }}</div>
+        </div>
+      </section>
+
+      <div class="toolbar">
+        <input
+          id="filter"
+          type="search"
+          placeholder="Filter by title, author, email, domain, description…"
+          autocomplete="off"
+        />
+        <div class="filter-chips" role="group" aria-label="Quick filters">
+          <button class="chip active" data-filter="all" type="button">All</button>
+          <button class="chip" data-filter="recent" type="button">Last 24h</button>
+          <button class="chip" data-filter="dup" type="button">Duplicates</button>
+          <button class="chip" data-filter="edited" type="button">Edited</button>
+        </div>
+        <span class="visible-count" id="visible-count"></span>
+      </div>
+
+      <div class="layout">
+        <div class="table-wrap">
+          <table class="subs" id="subs">
+            <thead>
+              <tr>
+                <th data-sort="num" data-key="id" class="sort-desc">ID<span class="arrow">▾</span></th>
+                <th data-sort="text" data-key="created">Created<span class="arrow">▾</span></th>
+                <th data-sort="text" data-key="author">Author<span class="arrow">▾</span></th>
+                <th data-sort="text" data-key="email">Email<span class="arrow">▾</span></th>
+                <th data-sort="text" data-key="title">Title<span class="arrow">▾</span></th>
+                <th data-sort="text" data-key="domain">Link<span class="arrow">▾</span></th>
+                <th data-sort="num" data-key="words" title="Description word count">Words<span class="arrow">▾</span></th>
+                <th data-sort="num" data-key="edits">Edits<span class="arrow">▾</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+                <tr
+                  class="row"
+                  data-id="{{ r.id }}"
+                  data-created="{{ r.created_at }}"
+                  data-author="{{ r.author | lower }}"
+                  data-email="{{ r.email | lower }}"
+                  data-title="{{ r.title | lower }}"
+                  data-domain="{{ r.link_domain }}"
+                  data-words="{{ r.desc_words }}"
+                  data-edits="{{ r.edits }}"
+                  data-recent="{{ '1' if r.is_recent else '0' }}"
+                  data-dup="{{ '1' if r.is_duplicate_author else '0' }}"
+                  data-search="{{ r.title | lower }} {{ r.author | lower }} {{ r.email | lower }} {{ r.link_domain }} {{ r.email_domain }} {{ r.description | lower }}"
                 >
-              </span>
-              <span class="actions">
-                <a href="/admin/submissions/{{ r.id }}/edit">Edit</a>
-                <a href="/admin/submissions/{{ r.id }}/history">History</a>
-                <form
-                  method="post"
-                  action="/admin/submissions/{{ r.id }}/delete"
-                  onsubmit="return confirm('Delete this submission? This cannot be undone.');"
-                >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                  <button type="submit" class="delete">Delete</button>
-                </form>
-              </span>
+                  <td class="num">#{{ r.id }}</td>
+                  <td class="when">
+                    <time datetime="{{ r.created_at }}" title="{{ r.created_at }}">{{ r.created_at }}</time>
+                    {% if r.is_recent %}<span class="badge recent">new</span>{% endif %}
+                  </td>
+                  <td class="author" title="{{ r.author }}">
+                    {{ r.author }}{% if r.is_duplicate_author %}<span class="badge dup">dup</span>{% endif %}
+                  </td>
+                  <td class="email" title="{{ r.email }}">
+                    <a href="mailto:{{ r.email }}" onclick="event.stopPropagation()">{{ r.email }}</a>
+                  </td>
+                  <td class="title">
+                    <span class="t" title="{{ r.title }}">{{ r.title }}</span>
+                    <span class="desc-preview">{{ r.description_preview }}</span>
+                  </td>
+                  <td class="domain">
+                    {% if r.link_domain %}
+                      <a href="{{ r.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="{{ r.link }}">{{ r.link_domain }}</a>
+                    {% else %}
+                      <a href="{{ r.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="{{ r.link }}">link</a>
+                    {% endif %}
+                  </td>
+                  <td class="num center">{{ r.desc_words }}</td>
+                  <td class="num center">
+                    {% if r.edits > 0 %}<span class="badge edits">{{ r.edits }}</span>{% else %}—{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="no-match" id="no-match">No submissions match the current filter.</div>
+        </div>
+
+        <aside class="detail" id="detail" aria-live="polite">
+          <div class="empty-state" id="detail-empty">
+            <p>Select a submission to read its full description and act on it.</p>
+            <div class="kbd-hint">
+              <kbd>j</kbd> / <kbd>k</kbd> next / previous · <kbd>Esc</kbd> close · <kbd>/</kbd> focus search
             </div>
-          </article>
+          </div>
+        </aside>
+      </div>
+
+      <div hidden>
+        {% for r in rows %}
+          <template id="detail-tpl-{{ r.id }}">
+            <header class="dh">
+              <div class="meta-line">
+                <span>#{{ r.id }}</span>
+                <span>·</span>
+                <time datetime="{{ r.created_at }}">{{ r.created_at }}</time>
+                {% if r.is_recent %}<span class="badge recent">new</span>{% endif %}
+                {% if r.is_duplicate_author %}<span class="badge dup">dup</span>{% endif %}
+                {% if r.edits > 0 %}<span class="badge edits">{{ r.edits }} edit{{ "s" if r.edits != 1 else "" }}</span>{% endif %}
+                <button class="close" type="button" aria-label="Close" data-close>Close</button>
+              </div>
+              <h2>{{ r.title }}</h2>
+            </header>
+            <div class="body">
+              <dl class="meta">
+                <dt>Author</dt><dd>{{ r.author }}</dd>
+                <dt>Email</dt><dd><a href="mailto:{{ r.email }}">{{ r.email }}</a></dd>
+                <dt>Essay</dt><dd><a href="{{ r.link }}" target="_blank" rel="noopener">{{ r.link }}</a></dd>
+                <dt>Domain</dt><dd>{{ r.link_domain or "—" }}</dd>
+                <dt>Words</dt><dd>{{ r.desc_words }}</dd>
+              </dl>
+              <p class="desc-label">Description</p>
+              <div class="desc">{{ r.description }}</div>
+            </div>
+            <footer class="actions">
+              <a class="primary" href="{{ r.link }}" target="_blank" rel="noopener">Open essay</a>
+              <a href="/admin/submissions/{{ r.id }}/edit">Edit</a>
+              <a href="/admin/submissions/{{ r.id }}/history">History</a>
+              <form
+                method="post"
+                action="/admin/submissions/{{ r.id }}/delete"
+                class="inline"
+                onsubmit="return confirm('Delete submission #{{ r.id }}? This cannot be undone.');"
+              >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <button type="submit" class="delete">Delete</button>
+              </form>
+            </footer>
+          </template>
         {% endfor %}
+      </div>
+
       {% else %}
         <p class="empty">No submissions yet.</p>
       {% endif %}
     </main>
+
     <script>
       (function () {
-        if (typeof Intl === "undefined" || !Intl.RelativeTimeFormat) return;
-        const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-        const UNITS = [
-          ["year", 31536000],
-          ["month", 2592000],
-          ["week", 604800],
-          ["day", 86400],
-          ["hour", 3600],
-          ["minute", 60],
-          ["second", 1],
-        ];
-        function relative(iso) {
-          const t = Date.parse(iso);
-          if (Number.isNaN(t)) return null;
-          const diff = (t - Date.now()) / 1000;
-          const abs = Math.abs(diff);
-          for (const [unit, secs] of UNITS) {
-            if (abs >= secs || unit === "second") {
-              return rtf.format(Math.round(diff / secs), unit);
+        // Relative time
+        if (typeof Intl !== "undefined" && Intl.RelativeTimeFormat) {
+          const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+          const UNITS = [
+            ["year", 31536000], ["month", 2592000], ["week", 604800],
+            ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1],
+          ];
+          function relative(iso) {
+            const t = Date.parse(iso);
+            if (Number.isNaN(t)) return null;
+            const diff = (t - Date.now()) / 1000;
+            const abs = Math.abs(diff);
+            for (const [unit, secs] of UNITS) {
+              if (abs >= secs || unit === "second") {
+                return rtf.format(Math.round(diff / secs), unit);
+              }
             }
           }
+          document.querySelectorAll("time[datetime]").forEach((el) => {
+            const rel = relative(el.getAttribute("datetime"));
+            if (rel) el.textContent = rel;
+          });
         }
-        document.querySelectorAll("time[datetime]").forEach((el) => {
-          const rel = relative(el.getAttribute("datetime"));
-          if (rel) el.textContent = rel;
+
+        const table = document.getElementById("subs");
+        if (!table) return;
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr.row"));
+        const visibleCount = document.getElementById("visible-count");
+        const noMatch = document.getElementById("no-match");
+        const detail = document.getElementById("detail");
+        const detailEmpty = document.getElementById("detail-empty");
+        let selectedRow = null;
+
+        function visibleRows() {
+          return rows.filter((r) => r.style.display !== "none");
+        }
+
+        function clearSelection() {
+          if (selectedRow) selectedRow.classList.remove("selected");
+          selectedRow = null;
+          // remove all children except the empty-state
+          Array.from(detail.children).forEach((c) => {
+            if (c !== detailEmpty) c.remove();
+          });
+          detailEmpty.hidden = false;
+        }
+
+        function setSelection(row) {
+          if (!row) return;
+          if (selectedRow) selectedRow.classList.remove("selected");
+          selectedRow = row;
+          selectedRow.classList.add("selected");
+
+          const tpl = document.getElementById("detail-tpl-" + row.dataset.id);
+          if (!tpl) return;
+          Array.from(detail.children).forEach((c) => {
+            if (c !== detailEmpty) c.remove();
+          });
+          detailEmpty.hidden = true;
+          detail.appendChild(tpl.content.cloneNode(true));
+
+          detail.querySelectorAll("time[datetime]").forEach((el) => {
+            const iso = el.getAttribute("datetime");
+            if (typeof Intl === "undefined" || !Intl.RelativeTimeFormat) return;
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+            const t = Date.parse(iso);
+            if (Number.isNaN(t)) return;
+            const diff = (t - Date.now()) / 1000;
+            const abs = Math.abs(diff);
+            const u = [["year", 31536000], ["month", 2592000], ["week", 604800],
+              ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1]];
+            for (const [unit, secs] of u) {
+              if (abs >= secs || unit === "second") {
+                el.title = iso;
+                el.textContent = rtf.format(Math.round(diff / secs), unit);
+                return;
+              }
+            }
+          });
+
+          const closeBtn = detail.querySelector("[data-close]");
+          if (closeBtn) closeBtn.addEventListener("click", clearSelection);
+
+          const r = row.getBoundingClientRect();
+          if (r.top < 80 || r.bottom > window.innerHeight - 20) {
+            row.scrollIntoView({ block: "center", behavior: "smooth" });
+          }
+        }
+
+        function toggleSelection(row) {
+          if (selectedRow === row) clearSelection();
+          else setSelection(row);
+        }
+
+        rows.forEach((row) => {
+          row.addEventListener("click", (e) => {
+            if (e.target.closest("a, button, form, input")) return;
+            toggleSelection(row);
+          });
+        });
+
+        // Filter
+        const filterInput = document.getElementById("filter");
+        const chips = Array.from(document.querySelectorAll(".chip"));
+        let activeChip = "all";
+
+        function applyFilter() {
+          const q = filterInput.value.trim().toLowerCase();
+          let shown = 0;
+          rows.forEach((row) => {
+            const text = row.dataset.search;
+            const matchesText = !q || text.indexOf(q) !== -1;
+            let matchesChip = true;
+            if (activeChip === "recent") matchesChip = row.dataset.recent === "1";
+            else if (activeChip === "dup") matchesChip = row.dataset.dup === "1";
+            else if (activeChip === "edited") matchesChip = parseInt(row.dataset.edits, 10) > 0;
+            const show = matchesText && matchesChip;
+            row.style.display = show ? "" : "none";
+            if (show) shown++;
+          });
+          if (selectedRow && selectedRow.style.display === "none") clearSelection();
+          if (visibleCount) {
+            visibleCount.textContent =
+              shown === rows.length
+                ? `${rows.length} row${rows.length === 1 ? "" : "s"}`
+                : `${shown} of ${rows.length}`;
+          }
+          if (noMatch) noMatch.classList.toggle("show", shown === 0);
+        }
+
+        filterInput.addEventListener("input", applyFilter);
+        chips.forEach((chip) => {
+          chip.addEventListener("click", () => {
+            chips.forEach((c) => c.classList.remove("active"));
+            chip.classList.add("active");
+            activeChip = chip.dataset.filter;
+            applyFilter();
+          });
+        });
+        applyFilter();
+
+        // Sort
+        const headers = Array.from(table.querySelectorAll("thead th[data-sort]"));
+        let sortKey = "id";
+        let sortDir = "desc";
+        function sortBy(key, dir) {
+          const isNum = headers.find((h) => h.dataset.key === key)?.dataset.sort === "num";
+          const sorted = rows.slice().sort((a, b) => {
+            const av = a.dataset[key] || "";
+            const bv = b.dataset[key] || "";
+            let cmp;
+            if (isNum) cmp = parseFloat(av || "0") - parseFloat(bv || "0");
+            else cmp = av.localeCompare(bv);
+            return dir === "asc" ? cmp : -cmp;
+          });
+          sorted.forEach((row) => tbody.appendChild(row));
+          headers.forEach((h) => {
+            h.classList.remove("sort-asc", "sort-desc");
+            if (h.dataset.key === key) {
+              h.classList.add(dir === "asc" ? "sort-asc" : "sort-desc");
+              h.querySelector(".arrow").textContent = dir === "asc" ? "▴" : "▾";
+            }
+          });
+        }
+        headers.forEach((h) => {
+          h.addEventListener("click", () => {
+            const key = h.dataset.key;
+            if (sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+            else {
+              sortKey = key;
+              sortDir = h.dataset.sort === "num" ? "desc" : "asc";
+            }
+            sortBy(sortKey, sortDir);
+          });
+        });
+
+        // Keyboard nav: j/k to step through visible rows, Esc to close, / to focus search
+        document.addEventListener("keydown", (e) => {
+          const tag = (e.target && e.target.tagName) || "";
+          const inField = tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable;
+          if (e.key === "/" && !inField) {
+            e.preventDefault();
+            filterInput.focus();
+            filterInput.select();
+            return;
+          }
+          if (inField) return;
+          const vis = visibleRows();
+          if (vis.length === 0) return;
+          if (e.key === "Escape") {
+            clearSelection();
+          } else if (e.key === "j" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const idx = selectedRow ? vis.indexOf(selectedRow) : -1;
+            const next = idx === -1 ? vis[0] : vis[Math.min(vis.length - 1, idx + 1)];
+            if (next) setSelection(next);
+          } else if (e.key === "k" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const idx = selectedRow ? vis.indexOf(selectedRow) : -1;
+            const prev = idx === -1 ? vis[vis.length - 1] : vis[Math.max(0, idx - 1)];
+            if (prev) setSelection(prev);
+          }
         });
       })();
     </script>

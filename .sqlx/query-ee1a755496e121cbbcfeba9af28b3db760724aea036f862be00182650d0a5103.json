@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT submission_id AS \"submission_id!: i64\", COUNT(*) AS \"n!: i64\"\n           FROM submission_edits GROUP BY submission_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "submission_id!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "n!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "ee1a755496e121cbbcfeba9af28b3db760724aea036f862be00182650d0a5103"
+}

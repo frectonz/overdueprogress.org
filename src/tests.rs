@@ -368,6 +368,96 @@ async fn admin_redirects_to_register_when_empty() {
 }
 
 #[tokio::test]
+async fn admin_template_renders_directly() {
+    use minijinja::context;
+    let view = View::new();
+    let row = context! {
+        id => 1i64,
+        title => "First essay",
+        description => "Some words",
+        description_preview => "Some words",
+        author => "Ada",
+        email => "ada@example.com",
+        link => "https://example.com/a",
+        created_at => "2026-04-25T12:00:00Z",
+        email_domain => "example.com",
+        link_domain => "example.com",
+        edits => 1i64,
+        desc_words => 2i64,
+        is_duplicate_author => true,
+        is_recent => true,
+    };
+    let ctx = context! {
+        rows => vec![row],
+        stats => context! {
+            total => 1i64, last_24h => 1i64, final_24h => 0i64,
+            edits_total => 1i64, submissions_edited => 1i64,
+            distinct_authors => 1i64, distinct_email_domains => 1i64,
+            distinct_link_domains => 1i64, duplicate_authors => 0i64,
+            last_at => Option::<String>::None,
+        },
+        csrf_token => "tok",
+    };
+    let res = view.render_to_string("admin.html", ctx);
+    assert!(res.is_ok(), "render error: {:?}", res.err());
+}
+
+#[tokio::test]
+async fn admin_page_renders_table_for_authed_session() {
+    let (state, _mock) = setup_state(true).await;
+    sqlx::query(
+        "INSERT INTO submissions (title, description, author, email, link)
+         VALUES ('First essay', 'Some words about progress', 'Ada Lovelace', 'ada@example.com', 'https://example.com/a'),
+                ('Second essay', 'More about overdue progress matters', 'Ada Lovelace', 'ada@example.com', 'https://other.org/b')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO submission_edits (submission_id, title, description, author, email, link, edit_kind)
+         VALUES (1, 'old', 'old', 'old', 'o@b.co', 'https://o.b', 'edit')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sessions (token, expires_at, csrf_token)
+         VALUES ('sess', strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '+1 day'), 'good-csrf')",
+    )
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let app = build_router(state);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .uri("/admin")
+                .header("x-forwarded-for", TEST_IP)
+                .header("cookie", "admin_session=sess")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    let html = std::str::from_utf8(&body).unwrap();
+    assert!(html.contains("Submissions"), "page heading should render");
+    assert!(html.contains("Ada Lovelace"), "author should appear");
+    assert!(html.contains("example.com"), "link domain should appear");
+    assert!(
+        html.contains("badge dup"),
+        "duplicate author should be flagged"
+    );
+    assert!(
+        html.contains("badge edits"),
+        "edit count badge should render"
+    );
+    assert!(html.contains("class=\"stat\""), "stat strip should render");
+}
+
+#[tokio::test]
 async fn login_page_redirects_when_no_passkeys() {
     let (state, _mock) = setup_state(true).await;
     let app = build_router(state);
