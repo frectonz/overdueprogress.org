@@ -184,16 +184,21 @@
         color: var(--ink);
       }
 
-      /* Layout: table + sticky detail panel */
+      /* Layout: table grows to full width until a row is selected */
       .layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 360px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 18px;
         align-items: start;
       }
-      @media (max-width: 1100px) {
-        .layout { grid-template-columns: 1fr; }
+      .layout.has-selection {
+        grid-template-columns: minmax(0, 1fr) 360px;
       }
+      @media (max-width: 1100px) {
+        .layout, .layout.has-selection { grid-template-columns: 1fr; }
+      }
+      aside.detail { display: none; }
+      .layout.has-selection aside.detail { display: flex; }
 
       /* Table */
       .table-wrap {
@@ -333,19 +338,6 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-      }
-      aside.detail .empty-state {
-        padding: 28px 22px;
-        color: var(--muted);
-        font-style: italic;
-        font-size: 14px;
-      }
-      aside.detail .empty-state .kbd-hint {
-        margin-top: 12px;
-        font-style: normal;
-        font-size: 12.5px;
-        color: var(--soft);
-        line-height: 1.9;
       }
       aside.detail header.dh {
         padding: 16px 20px 12px;
@@ -630,14 +622,7 @@
           <div class="no-match" id="no-match">No submissions match the current filter.</div>
         </div>
 
-        <aside class="detail" id="detail" aria-live="polite">
-          <div class="empty-state" id="detail-empty">
-            <p>Select a submission to read its full description and act on it.</p>
-            <div class="kbd-hint">
-              <kbd>j</kbd> / <kbd>k</kbd> next / previous · <kbd>Esc</kbd> close · <kbd>/</kbd> focus search
-            </div>
-          </div>
-        </aside>
+        <aside class="detail" id="detail" aria-live="polite"></aside>
       </div>
 
       <div hidden>
@@ -729,7 +714,7 @@
         const visibleCount = document.getElementById("visible-count");
         const noMatch = document.getElementById("no-match");
         const detail = document.getElementById("detail");
-        const detailEmpty = document.getElementById("detail-empty");
+        const layout = document.querySelector(".layout");
         let selectedRow = null;
 
         function visibleRows() {
@@ -763,11 +748,8 @@
         function clearSelection() {
           if (selectedRow) selectedRow.classList.remove("selected");
           selectedRow = null;
-          // remove all children except the empty-state
-          Array.from(detail.children).forEach((c) => {
-            if (c !== detailEmpty) c.remove();
-          });
-          detailEmpty.hidden = false;
+          detail.replaceChildren();
+          if (layout) layout.classList.remove("has-selection");
         }
 
         function setSelection(row) {
@@ -778,11 +760,8 @@
 
           const tpl = document.getElementById("detail-tpl-" + row.dataset.id);
           if (!tpl) return;
-          Array.from(detail.children).forEach((c) => {
-            if (c !== detailEmpty) c.remove();
-          });
-          detailEmpty.hidden = true;
-          detail.appendChild(tpl.content.cloneNode(true));
+          detail.replaceChildren(tpl.content.cloneNode(true));
+          if (layout) layout.classList.add("has-selection");
 
           detail.querySelectorAll("time[datetime]").forEach((el) => {
             const iso = el.getAttribute("datetime");
