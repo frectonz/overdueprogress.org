@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT lower(trim(email)) AS \"email!: String\"\n           FROM submissions\n           WHERE trim(email) <> ''",
+  "describe": {
+    "columns": [
+      {
+        "name": "email!: String",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "6d4522f4dfead6d48739d3ff5fc66e92bbb8a8a3465ffb7431401220b359c105"
+}

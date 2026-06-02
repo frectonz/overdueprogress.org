@@ -122,6 +122,48 @@
         text-overflow: ellipsis;
       }
 
+      /* Emails section */
+      .emails {
+        background: var(--card);
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+      }
+      .emails-text h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .emails-text p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--soft);
+      }
+      .email-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .email-action {
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid var(--rule);
+        padding: 7px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      .email-action:hover { color: var(--ink); border-color: #bdbdbd; }
+      .email-action[disabled] { opacity: 0.6; cursor: progress; }
+
       /* Toolbar */
       .toolbar {
         display: flex;
@@ -540,6 +582,16 @@
         </div>
       </section>
 
+      <section class="emails">
+        <div class="emails-text">
+          <h2>Emails</h2>
+          <p>Send an email to every submitter (one per distinct address).</p>
+        </div>
+        <div class="email-actions">
+          <button type="button" class="email-action" id="broadcast-btn">Send timeline update</button>
+        </div>
+      </section>
+
       <div class="toolbar">
         <input
           id="filter"
@@ -683,6 +735,47 @@
 
     <script>
       (function () {
+        const broadcastBtn = document.getElementById("broadcast-btn");
+        if (broadcastBtn) {
+          broadcastBtn.addEventListener("click", async () => {
+            if (
+              !confirm(
+                "Send the timeline update email to ALL submitters?\n\n" +
+                  "This emails every distinct address that has submitted, " +
+                  "and cannot be undone."
+              )
+            )
+              return;
+            const original = broadcastBtn.textContent;
+            broadcastBtn.disabled = true;
+            broadcastBtn.textContent = "Sending…";
+            try {
+              const params = new URLSearchParams();
+              params.append("csrf_token", document.body.dataset.csrf || "");
+              const res = await fetch("/admin/broadcast", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params.toString(),
+                credentials: "same-origin",
+              });
+              if (!res.ok) throw new Error("broadcast failed " + res.status);
+              const data = await res.json();
+              alert(
+                "Broadcast started — sending to " +
+                  data.recipients +
+                  " recipient(s) in the background. " +
+                  "You'll get a Telegram update when it finishes."
+              );
+            } catch (err) {
+              console.error(err);
+              alert("Could not start the broadcast. Try again.");
+            } finally {
+              broadcastBtn.disabled = false;
+              broadcastBtn.textContent = original;
+            }
+          });
+        }
+
         // Relative time
         if (typeof Intl !== "undefined" && Intl.RelativeTimeFormat) {
           const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });

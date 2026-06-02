@@ -37,13 +37,29 @@ impl Client {
     }
 
     pub async fn send(&self, to: &str, subject: &str, text: &str) -> Result<(), ResendError> {
-        tracing::debug!(%to, %subject, "sending email");
-        let payload = Email {
+        self.send_email(Email {
             from: &self.from,
             to: [to],
             subject,
-            text,
-        };
+            text: Some(text),
+            html: None,
+        })
+        .await
+    }
+
+    pub async fn send_html(&self, to: &str, subject: &str, html: &str) -> Result<(), ResendError> {
+        self.send_email(Email {
+            from: &self.from,
+            to: [to],
+            subject,
+            text: None,
+            html: Some(html),
+        })
+        .await
+    }
+
+    async fn send_email(&self, payload: Email<'_>) -> Result<(), ResendError> {
+        tracing::debug!(to = %payload.to[0], subject = %payload.subject, "sending email");
         self.http
             .post(&self.send_url)
             .bearer_auth(&self.api_key)
@@ -51,7 +67,7 @@ impl Client {
             .send()
             .await?
             .error_for_status()?;
-        tracing::debug!(%to, "email sent");
+        tracing::debug!(to = %payload.to[0], "email sent");
         Ok(())
     }
 }
@@ -61,5 +77,8 @@ struct Email<'a> {
     from: &'a str,
     to: [&'a str; 1],
     subject: &'a str,
-    text: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    text: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    html: Option<&'a str>,
 }

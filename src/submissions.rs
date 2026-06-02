@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{
-    Form, Router,
+    Form, Json, Router,
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Redirect, Response},
@@ -67,6 +68,10 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/deadline", get(deadline_page))
         .route("/admin", get(admin_page))
+        .route(
+            "/admin/broadcast",
+            post(broadcast_timeline).layer(review_limit.clone()),
+        )
         .route(
             "/admin/submissions/{id}/delete",
             post(delete_submission).layer(delete_limit),
@@ -559,6 +564,74 @@ async fn review_submission(
     }
 
     Ok(StatusCode::NO_CONTENT.into_response())
+}
+
+const BROADCAST_TEMPLATE: &str = "competition_timeline_update_email.html";
+const BROADCAST_SUBJECT: &str = "Update on the Overdue Progress Essay Competition timeline";
+const BROADCAST_DELAY: Duration = Duration::from_millis(600);
+
+#[derive(Deserialize)]
+struct BroadcastForm {
+    csrf_token: String,
+}
+
+async fn broadcast_timeline(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!("broadcast denied: no session");
+        return Ok(redirect);
+    }
+
+    let Some(expected) = auth::current_csrf_token(&state.db, &jar).await else {
+        tracing::warn!("broadcast denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if form.csrf_token != expected {
+        tracing::warn!("broadcast denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    }
+
+    let recipients = sqlx::query_scalar!(
+        r#"SELECT DISTINCT lower(trim(email)) AS "email!: String"
+           FROM submissions
+           WHERE trim(email) <> ''"#
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let html = state
+        .view
+        .render_to_string(BROADCAST_TEMPLATE, context! {})?;
+
+    let count = recipients.len();
+    tracing::info!(count, "starting timeline broadcast");
+    state.telegram.notify(format!(
+        "📣 Broadcasting timeline update to {count} recipient(s)…"
+    ));
+
+    tokio::spawn(async move {
+        let mut sent = 0usize;
+        let mut failed = 0usize;
+        for to in &recipients {
+            match state.resend.send_html(to, BROADCAST_SUBJECT, &html).await {
+                Ok(()) => sent += 1,
+                Err(err) => {
+                    failed += 1;
+                    tracing::error!(?err, %to, "timeline broadcast send failed");
+                }
+            }
+            tokio::time::sleep(BROADCAST_DELAY).await;
+        }
+        tracing::info!(sent, failed, "timeline broadcast complete");
+        state.telegram.notify(format!(
+            "✅ Timeline broadcast complete: {sent} sent, {failed} failed."
+        ));
+    });
+
+    Ok(Json(serde_json::json!({ "recipients": count })).into_response())
 }
 
 #[derive(Deserialize)]
