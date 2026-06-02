@@ -75,6 +75,52 @@ let
         ${target} "$@"
     '';
   };
+
+  restic-op = pkgs.writeShellApplication {
+    name = "restic-op";
+    runtimeInputs = [
+      pkgs.restic
+      pkgs.sops
+      pkgs.coreutils
+    ];
+    text = ''
+      set -euo pipefail
+      secrets=hosts/op/secrets.yaml
+      if [ ! -f "$secrets" ]; then
+        echo "restic-op: $secrets not found (run from repo root)" >&2
+        exit 1
+      fi
+      RESTIC_REPOSITORY=$(sops --decrypt --extract '["restic_repository"]' "$secrets")
+      RESTIC_PASSWORD=$(sops --decrypt --extract '["restic_password"]' "$secrets")
+      export RESTIC_REPOSITORY RESTIC_PASSWORD
+      env_file=$(mktemp)
+      trap 'rm -f "$env_file"' EXIT
+      chmod 600 "$env_file"
+      sops --decrypt --extract '["restic_env"]' "$secrets" > "$env_file"
+      set -a
+      # shellcheck disable=SC1090
+      . "$env_file"
+      set +a
+      if [ "$#" -eq 0 ]; then
+        cat <<'EOF' >&2
+restic-op: thin wrapper around `restic` with the op host's R2 creds loaded.
+
+Common commands:
+  restic-op snapshots                       list backups
+  restic-op snapshots --json                machine-readable list
+  restic-op restore latest --target ./out   restore latest snapshot to ./out
+  restic-op restore <id> --target ./out     restore a specific snapshot
+  restic-op dump latest /var/lib/overdueprogress/snapshot.db > restored.db
+  restic-op mount /tmp/restic-mnt           browse snapshots as files
+  restic-op stats                           repo stats
+
+Pass any restic args after `restic-op`.
+EOF
+        exit 1
+      fi
+      exec restic "$@"
+    '';
+  };
 in
 pkgs.mkShellNoCC {
   packages = [
@@ -97,6 +143,7 @@ pkgs.mkShellNoCC {
     server-switch
     server-deploy
     telegram-chat-id
+    restic-op
   ];
 
   shellHook = ''
