@@ -589,6 +589,7 @@
         </div>
         <div class="email-actions">
           <button type="button" class="email-action" id="broadcast-btn">Send timeline update</button>
+          <button type="button" class="email-action" id="broadcast-essays-btn">Send essays announcement</button>
         </div>
       </section>
 
@@ -735,24 +736,25 @@
 
     <script>
       (function () {
-        const broadcastBtn = document.getElementById("broadcast-btn");
-        if (broadcastBtn) {
-          broadcastBtn.addEventListener("click", async () => {
+        function wireBroadcast(btnId, endpoint, what) {
+          const btn = document.getElementById(btnId);
+          if (!btn) return;
+          btn.addEventListener("click", async () => {
             if (
               !confirm(
-                "Send the timeline update email to ALL submitters?\n\n" +
+                "Send the " + what + " email to ALL submitters?\n\n" +
                   "This emails every distinct address that has submitted, " +
                   "and cannot be undone."
               )
             )
               return;
-            const original = broadcastBtn.textContent;
-            broadcastBtn.disabled = true;
-            broadcastBtn.textContent = "Sending…";
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Sending…";
             try {
               const params = new URLSearchParams();
               params.append("csrf_token", document.body.dataset.csrf || "");
-              const res = await fetch("/admin/broadcast", {
+              const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: params.toString(),
@@ -770,11 +772,18 @@
               console.error(err);
               alert("Could not start the broadcast. Try again.");
             } finally {
-              broadcastBtn.disabled = false;
-              broadcastBtn.textContent = original;
+              btn.disabled = false;
+              btn.textContent = original;
             }
           });
         }
+
+        wireBroadcast("broadcast-btn", "/admin/broadcast", "timeline update");
+        wireBroadcast(
+          "broadcast-essays-btn",
+          "/admin/broadcast/essays-public",
+          "essays announcement"
+        );
 
         // Relative time
         if (typeof Intl !== "undefined" && Intl.RelativeTimeFormat) {

@@ -73,6 +73,10 @@ pub fn routes() -> Router<AppState> {
             post(broadcast_timeline).layer(review_limit.clone()),
         )
         .route(
+            "/admin/broadcast/essays-public",
+            post(broadcast_essays_public).layer(review_limit.clone()),
+        )
+        .route(
             "/admin/submissions/{id}/delete",
             post(delete_submission).layer(delete_limit),
         )
@@ -566,8 +570,10 @@ async fn review_submission(
     Ok(StatusCode::NO_CONTENT.into_response())
 }
 
-const BROADCAST_TEMPLATE: &str = "competition_timeline_update_email.html";
-const BROADCAST_SUBJECT: &str = "Update on the Overdue Progress Essay Competition timeline";
+const TIMELINE_TEMPLATE: &str = "competition_timeline_update_email.html";
+const TIMELINE_SUBJECT: &str = "Update on the Overdue Progress Essay Competition timeline";
+const ESSAYS_PUBLIC_TEMPLATE: &str = "competition_essays_public_email.html";
+const ESSAYS_PUBLIC_SUBJECT: &str = "The Overdue Progress essays are now public";
 const BROADCAST_DELAY: Duration = Duration::from_millis(600);
 
 #[derive(Deserialize)]
@@ -579,6 +585,41 @@ async fn broadcast_timeline(
     State(state): State<AppState>,
     jar: CookieJar,
     Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    run_broadcast(
+        state,
+        jar,
+        form,
+        TIMELINE_TEMPLATE,
+        TIMELINE_SUBJECT,
+        "timeline update",
+    )
+    .await
+}
+
+async fn broadcast_essays_public(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    run_broadcast(
+        state,
+        jar,
+        form,
+        ESSAYS_PUBLIC_TEMPLATE,
+        ESSAYS_PUBLIC_SUBJECT,
+        "essays announcement",
+    )
+    .await
+}
+
+async fn run_broadcast(
+    state: AppState,
+    jar: CookieJar,
+    form: BroadcastForm,
+    template: &'static str,
+    subject: &'static str,
+    label: &'static str,
 ) -> Result<Response, AppError> {
     if let Some(redirect) = auth::require_session(&state, &jar).await {
         tracing::debug!("broadcast denied: no session");
@@ -602,32 +643,30 @@ async fn broadcast_timeline(
     .fetch_all(&state.db)
     .await?;
 
-    let html = state
-        .view
-        .render_to_string(BROADCAST_TEMPLATE, context! {})?;
+    let html = state.view.render_to_string(template, context! {})?;
 
     let count = recipients.len();
-    tracing::info!(count, "starting timeline broadcast");
-    state.telegram.notify(format!(
-        "📣 Broadcasting timeline update to {count} recipient(s)…"
-    ));
+    tracing::info!(count, label, "starting broadcast");
+    state
+        .telegram
+        .notify(format!("📣 Broadcasting {label} to {count} recipient(s)…"));
 
     tokio::spawn(async move {
         let mut sent = 0usize;
         let mut failed = 0usize;
         for to in &recipients {
-            match state.resend.send_html(to, BROADCAST_SUBJECT, &html).await {
+            match state.resend.send_html(to, subject, &html).await {
                 Ok(()) => sent += 1,
                 Err(err) => {
                     failed += 1;
-                    tracing::error!(?err, %to, "timeline broadcast send failed");
+                    tracing::error!(?err, %to, label, "broadcast send failed");
                 }
             }
             tokio::time::sleep(BROADCAST_DELAY).await;
         }
-        tracing::info!(sent, failed, "timeline broadcast complete");
+        tracing::info!(sent, failed, label, "broadcast complete");
         state.telegram.notify(format!(
-            "✅ Timeline broadcast complete: {sent} sent, {failed} failed."
+            "✅ {label} broadcast complete: {sent} sent, {failed} failed."
         ));
     });
 
