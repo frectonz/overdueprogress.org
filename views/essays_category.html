@@ -1,0 +1,14 @@
+{% extends "essays_base.html" %}
+{% block body %}
+    <a class="back" href="/essays">Back to all essays</a>
+    <h1>{{ title }}</h1>
+
+    {% for essay in essays %}
+    <div class="essay">
+      <div class="essay-title">
+        <a href="{{ essay.link }}" target="_blank" rel="noopener">{{ essay.title }}</a>
+      </div>
+      <div class="essay-meta">by {{ essay.author }}</div>
+    </div>
+    {% endfor %}
+{% endblock %}

@@ -1,6 +1,7 @@
 mod auth;
 mod config;
 mod error;
+mod essays;
 mod resend;
 mod stats;
 mod submissions;
@@ -125,6 +126,7 @@ fn build_router(state: AppState) -> Router {
     Router::new()
         .merge(submissions::routes())
         .merge(stats::routes())
+        .merge(essays::routes())
         .merge(auth::routes())
         .fallback(static_fallback)
         .layer(DefaultBodyLimit::max(64 * 1024))

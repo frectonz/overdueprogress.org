@@ -1,0 +1,27 @@
+{% extends "essays_base.html" %}
+{% block body %}
+    <h1>The Essays</h1>
+
+    <p class="lead">
+      All {{ total }} essays from our first
+      <a href="/competition">essay competition</a> are now available below,
+      grouped by theme.
+    </p>
+
+    <p class="lead">
+      The competition has ended. The three winners will be announced on June 17.
+    </p>
+
+    <p class="lead">
+      New here? Start with <a href="/">what Overdue Progress is</a>.
+    </p>
+
+    {% for cat in categories %}
+    <div class="cat">
+      <div class="cat-title">
+        <a href="/essays/{{ cat.slug }}">{{ cat.title }}</a>
+        <span class="count">({{ cat.count }})</span>
+      </div>
+    </div>
+    {% endfor %}
+{% endblock %}

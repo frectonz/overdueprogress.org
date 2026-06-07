@@ -6,3 +6,6 @@
 *.db-wal
 .env
 result
+
+shortlist.json
+shortlist.csv
