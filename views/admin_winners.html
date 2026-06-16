@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Winner codes — Overdue Progress admin</title>
+    <style>
+      :root {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+      body {
+        max-width: 920px;
+        margin: 48px auto;
+        padding: 0 24px;
+        color: #1a1a1a;
+        line-height: 1.5;
+      }
+      .back {
+        font-size: 14px;
+        color: #666;
+        text-decoration: none;
+      }
+      .back:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 16px 0 4px;
+      }
+      p.lead {
+        color: #555;
+        margin-top: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 24px;
+        font-size: 15px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+      }
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #888;
+      }
+      .rank {
+        font-weight: 700;
+        color: #b8860b;
+        white-space: nowrap;
+      }
+      .email {
+        color: #555;
+      }
+      .code-cell {
+        white-space: nowrap;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 14px;
+        background: #f5f3ec;
+        border: 1px solid #e7e1cd;
+        border-radius: 6px;
+        padding: 4px 8px;
+      }
+      .copy {
+        margin-left: 8px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 6px;
+        padding: 4px 8px;
+        cursor: pointer;
+        color: #333;
+      }
+      .copy:hover {
+        background: #f3f3f3;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="/admin">Back to dashboard</a>
+
+    <h1>Winner prize codes</h1>
+    <p class="lead">
+      Each winner's email contains their unique code. When someone messages
+      <a href="https://t.me/frectonz" target="_blank" rel="noopener">@frectonz</a>
+      to receive their prize, match the code they send against this list to
+      confirm who they are.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Author</th>
+          <th>Essay</th>
+          <th>Email</th>
+          <th>Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in winners %}
+        <tr>
+          <td class="rank">{{ w.rank }}</td>
+          <td>{{ w.author }}</td>
+          <td>{{ w.title }}</td>
+          <td class="email">{{ w.email }}</td>
+          <td class="code-cell">
+            <code>{{ w.code }}</code>
+            <button type="button" class="copy" data-code="{{ w.code }}">Copy</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <script>
+      document.querySelectorAll(".copy").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.code || "");
+            const original = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(() => {
+              btn.textContent = original;
+            }, 1200);
+          } catch (err) {
+            console.error(err);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

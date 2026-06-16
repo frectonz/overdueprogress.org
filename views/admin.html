@@ -585,11 +585,15 @@
       <section class="emails">
         <div class="emails-text">
           <h2>Emails</h2>
-          <p>Send an email to every submitter (one per distinct address).</p>
+          <p>Broadcasts to all submitters, plus the targeted results emails.</p>
         </div>
         <div class="email-actions">
           <button type="button" class="email-action" id="broadcast-btn">Send timeline update</button>
           <button type="button" class="email-action" id="broadcast-essays-btn">Send essays announcement</button>
+          <button type="button" class="email-action" id="broadcast-winners-btn">Email the 3 winners</button>
+          <button type="button" class="email-action" id="broadcast-top15-btn">Email the top 15</button>
+          <button type="button" class="email-action" id="broadcast-results-btn">Email everyone else</button>
+          <a class="email-action" href="/admin/winners">View winner codes</a>
         </div>
       </section>
 
@@ -742,9 +746,8 @@
           btn.addEventListener("click", async () => {
             if (
               !confirm(
-                "Send the " + what + " email to ALL submitters?\n\n" +
-                  "This emails every distinct address that has submitted, " +
-                  "and cannot be undone."
+                "Send the " + what + " email now?\n\n" +
+                  "This sends in the background and cannot be undone."
               )
             )
               return;
@@ -783,6 +786,13 @@
           "broadcast-essays-btn",
           "/admin/broadcast/essays-public",
           "essays announcement"
+        );
+        wireBroadcast("broadcast-winners-btn", "/admin/broadcast/winners", "winners");
+        wireBroadcast("broadcast-top15-btn", "/admin/broadcast/top15", "top 15");
+        wireBroadcast(
+          "broadcast-results-btn",
+          "/admin/broadcast/results",
+          "results (everyone else)"
         );
 
         // Relative time

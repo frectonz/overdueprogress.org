@@ -11,7 +11,9 @@ use axum::{
 };
 use axum_extra::extract::cookie::CookieJar;
 use minijinja::{Value, context};
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
+use sqlx::SqlitePool;
 use time::{OffsetDateTime, macros::datetime};
 use tower_governor::{
     GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
@@ -75,6 +77,19 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/admin/broadcast/essays-public",
             post(broadcast_essays_public).layer(review_limit.clone()),
+        )
+        .route("/admin/winners", get(winners_page))
+        .route(
+            "/admin/broadcast/winners",
+            post(broadcast_winners).layer(review_limit.clone()),
+        )
+        .route(
+            "/admin/broadcast/top15",
+            post(broadcast_top15).layer(review_limit.clone()),
+        )
+        .route(
+            "/admin/broadcast/results",
+            post(broadcast_results).layer(review_limit.clone()),
         )
         .route(
             "/admin/submissions/{id}/delete",
@@ -670,6 +685,259 @@ async fn run_broadcast(
         ));
     });
 
+    Ok(Json(serde_json::json!({ "recipients": count })).into_response())
+}
+
+// --- Results emails (winners / top 15 / everyone else) -------------------
+
+/// Submission IDs in final rank order (1..=15). The first three are the winners.
+const RANKED_IDS: [i64; 15] = [78, 17, 43, 45, 58, 71, 74, 10, 80, 52, 86, 79, 20, 25, 57];
+
+const WINNER_TEMPLATE: &str = "competition_winner_email.html";
+const WINNER_SUBJECT: &str = "Good news about your Overdue Progress essay";
+const TOP15_TEMPLATE: &str = "competition_top15_email.html";
+const TOP15_SUBJECT: &str = "Your essay made the Overdue Progress top 15";
+const RESULTS_TEMPLATE: &str = "competition_results_email.html";
+const RESULTS_SUBJECT: &str = "Results of the Overdue Progress essay competition";
+
+#[derive(Serialize, sqlx::FromRow)]
+struct Recipient {
+    author: String,
+    email: String,
+    title: String,
+}
+
+#[derive(Serialize, sqlx::FromRow)]
+struct WinnerRow {
+    rank: i64,
+    author: String,
+    title: String,
+    email: String,
+    code: String,
+}
+
+struct Outgoing {
+    to: String,
+    html: String,
+}
+
+/// A random, non-guessable prize code. The rank is intentionally NOT encoded so
+/// nothing predictable lives in the (public) source; the value is stored in the
+/// database once generated.
+fn generate_code() -> String {
+    let n: u32 = rand::rng().random_range(100_000..1_000_000);
+    format!("OVERDUE-PROGRESS-2026-{n}")
+}
+
+/// Shared session + CSRF check for admin POST endpoints. Returns `Ok(Some(..))`
+/// with a redirect when there's no session, `Ok(None)` when authorized.
+async fn authorize_admin_post(
+    state: &AppState,
+    jar: &CookieJar,
+    csrf_token: &str,
+) -> Result<Option<Response>, AppError> {
+    if let Some(redirect) = auth::require_session(state, jar).await {
+        return Ok(Some(redirect));
+    }
+    let Some(expected) = auth::current_csrf_token(&state.db, jar).await else {
+        tracing::warn!("admin post denied: no csrf token on session");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    };
+    if csrf_token != expected {
+        tracing::warn!("admin post denied: csrf token mismatch");
+        return Err(AppError::BadRequest("invalid csrf token"));
+    }
+    Ok(None)
+}
+
+/// Generate codes for any winner that doesn't have one yet, then return all
+/// three winners (with author/title/email/code) ordered by rank.
+async fn ensure_winner_codes(db: &SqlitePool) -> Result<Vec<WinnerRow>, AppError> {
+    for (i, &id) in RANKED_IDS[..3].iter().enumerate() {
+        let rank = (i + 1) as i64;
+        let existing: Option<String> =
+            sqlx::query_scalar("SELECT code FROM winner_codes WHERE submission_id = ?")
+                .bind(id)
+                .fetch_optional(db)
+                .await?;
+        if existing.is_none() {
+            let code = generate_code();
+            sqlx::query("INSERT INTO winner_codes (submission_id, rank, code) VALUES (?, ?, ?)")
+                .bind(id)
+                .bind(rank)
+                .bind(&code)
+                .execute(db)
+                .await?;
+            tracing::info!(id, rank, "generated winner prize code");
+        }
+    }
+
+    let rows = sqlx::query_as::<_, WinnerRow>(
+        "SELECT w.rank, s.author, s.title, s.email, w.code
+         FROM winner_codes w
+         JOIN submissions s ON s.id = w.submission_id
+         ORDER BY w.rank",
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
+/// Fire off a batch of pre-rendered, per-recipient emails in the background.
+fn dispatch_personalized(
+    state: AppState,
+    label: &'static str,
+    subject: &'static str,
+    outgoing: Vec<Outgoing>,
+) -> usize {
+    let count = outgoing.len();
+    tracing::info!(count, label, "starting personalized broadcast");
+    state
+        .telegram
+        .notify(format!("📣 Broadcasting {label} to {count} recipient(s)…"));
+
+    tokio::spawn(async move {
+        let mut sent = 0usize;
+        let mut failed = 0usize;
+        for msg in &outgoing {
+            match state.resend.send_html(&msg.to, subject, &msg.html).await {
+                Ok(()) => sent += 1,
+                Err(err) => {
+                    failed += 1;
+                    tracing::error!(?err, to = %msg.to, label, "broadcast send failed");
+                }
+            }
+            tokio::time::sleep(BROADCAST_DELAY).await;
+        }
+        tracing::info!(sent, failed, label, "personalized broadcast complete");
+        state.telegram.notify(format!(
+            "✅ {label} broadcast complete: {sent} sent, {failed} failed."
+        ));
+    });
+
+    count
+}
+
+async fn winners_page(State(state): State<AppState>, jar: CookieJar) -> Result<Response, AppError> {
+    if let Some(redirect) = auth::require_session(&state, &jar).await {
+        tracing::debug!("winners page accessed without session; redirecting");
+        return Ok(redirect);
+    }
+    let csrf_token = auth::current_csrf_token(&state.db, &jar).await;
+    let winners = ensure_winner_codes(&state.db).await?;
+    Ok(state.view.render(
+        "admin_winners.html",
+        context! { winners => winners, csrf_token => csrf_token },
+    ))
+}
+
+async fn broadcast_winners(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = authorize_admin_post(&state, &jar, &form.csrf_token).await? {
+        return Ok(redirect);
+    }
+
+    let winners = ensure_winner_codes(&state.db).await?;
+    let mut outgoing = Vec::with_capacity(winners.len());
+    for w in &winners {
+        let html = state.view.render_to_string(
+            WINNER_TEMPLATE,
+            context! { author => w.author, title => w.title, code => w.code, rank => w.rank },
+        )?;
+        outgoing.push(Outgoing {
+            to: w.email.clone(),
+            html,
+        });
+    }
+
+    let count = dispatch_personalized(state, "winners", WINNER_SUBJECT, outgoing);
+    Ok(Json(serde_json::json!({ "recipients": count })).into_response())
+}
+
+async fn broadcast_top15(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = authorize_admin_post(&state, &jar, &form.csrf_token).await? {
+        return Ok(redirect);
+    }
+
+    // Ranks 4..=15: the finalists, excluding the three winners.
+    let ids = &RANKED_IDS[3..];
+    let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let sql = format!(
+        "SELECT author, email, title FROM submissions \
+         WHERE id IN ({placeholders}) AND trim(email) <> '' ORDER BY id"
+    );
+    let mut query = sqlx::query_as::<_, Recipient>(&sql);
+    for &id in ids {
+        query = query.bind(id);
+    }
+    let rows = query.fetch_all(&state.db).await?;
+
+    let mut outgoing = Vec::with_capacity(rows.len());
+    for r in &rows {
+        let html = state.view.render_to_string(
+            TOP15_TEMPLATE,
+            context! { author => r.author, title => r.title },
+        )?;
+        outgoing.push(Outgoing {
+            to: r.email.clone(),
+            html,
+        });
+    }
+
+    let count = dispatch_personalized(state, "top 15", TOP15_SUBJECT, outgoing);
+    Ok(Json(serde_json::json!({ "recipients": count })).into_response())
+}
+
+async fn broadcast_results(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Form(form): Form<BroadcastForm>,
+) -> Result<Response, AppError> {
+    if let Some(redirect) = authorize_admin_post(&state, &jar, &form.csrf_token).await? {
+        return Ok(redirect);
+    }
+
+    // Everyone who did not make the top 15. Dedup by email, and exclude any
+    // address that belongs to a ranked entry so winners/finalists never also
+    // receive a "didn't make it" email.
+    let placeholders = RANKED_IDS.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let sql = format!(
+        "SELECT author, email, title FROM submissions \
+         WHERE id NOT IN ({placeholders}) \
+         AND lower(trim(email)) NOT IN \
+             (SELECT lower(trim(email)) FROM submissions WHERE id IN ({placeholders})) \
+         AND trim(email) <> '' \
+         GROUP BY lower(trim(email)) ORDER BY id"
+    );
+    let mut query = sqlx::query_as::<_, Recipient>(&sql);
+    for &id in RANKED_IDS.iter() {
+        query = query.bind(id);
+    }
+    for &id in RANKED_IDS.iter() {
+        query = query.bind(id);
+    }
+    let rows = query.fetch_all(&state.db).await?;
+
+    let mut outgoing = Vec::with_capacity(rows.len());
+    for r in &rows {
+        let html = state.view.render_to_string(
+            RESULTS_TEMPLATE,
+            context! { author => r.author, title => r.title },
+        )?;
+        outgoing.push(Outgoing {
+            to: r.email.clone(),
+            html,
+        });
+    }
+
+    let count = dispatch_personalized(state, "results", RESULTS_SUBJECT, outgoing);
     Ok(Json(serde_json::json!({ "recipients": count })).into_response())
 }
 
