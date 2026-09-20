@@ -1,191 +1,85 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deadline — Overdue Progress</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        max-width: 620px;
-        margin: 60px auto;
-        padding: 0 24px;
-        font-family: "Source Serif 4", Georgia, serif;
-        font-size: 18px;
-        line-height: 1.8;
-        color: #222;
-      }
-      h1 {
-        font-size: 32px;
-        margin-bottom: 8px;
-      }
-      a {
-        color: #222;
-      }
-      .countdown {
-        margin-top: 32px;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        text-align: center;
-      }
-      .countdown .cell {
-        padding: 16px 8px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background: #fafafa;
-      }
-      .countdown .num {
-        font-size: 40px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        line-height: 1.1;
-      }
-      .countdown .label {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #666;
-        margin-top: 4px;
-      }
-      .stat {
-        margin-top: 40px;
-        padding: 20px 24px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background: #fafafa;
-      }
-      .stat .num {
-        font-size: 40px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        line-height: 1.1;
-      }
-      .stat .label {
-        font-size: 14px;
-        color: #666;
-        margin-top: 4px;
-      }
-      .winners-banner {
-        display: block;
-        position: relative;
-        left: 50%;
-        width: 100vw;
-        margin-left: -50vw;
-        margin-top: -60px;
-        margin-bottom: 44px;
-        box-sizing: border-box;
-        background: #1a1a1a;
-        color: #fff;
-        text-decoration: none;
-        padding: 13px 24px;
-        text-align: center;
-        font-size: 16px;
-        line-height: 1.5;
-      }
-      .winners-banner:hover {
-        background: #000;
-      }
-      .winners-banner .cue {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
-    <a class="winners-banner" href="/winners">
-      The winners of our first essay competition are in.
-      <span class="cue">Read the three winning essays</span>.
-    </a>
+{% extends "base.html" %}
+{% block subtitle %}<span class="sub">The deadline</span>{% endblock %}
+{% block body %}
+    <main class="article prose">
+      <h1>Deadline</h1>
 
-    <h1>Deadline</h1>
-
-    <p>
-      Submissions for the
-      <a href="/competition">Overdue Progress essay competition</a>
-      {% if closed %}closed{% else %}close{% endif %}
-      <strong>Monday, April 27, 2026, 12:59 AM EAT</strong>.
-    </p>
-
-    {% if closed %}
-      <div class="countdown" aria-live="polite">
-        <div class="cell"><div class="num">00</div><div class="label">Days</div></div>
-        <div class="cell"><div class="num">00</div><div class="label">Hours</div></div>
-        <div class="cell"><div class="num">00</div><div class="label">Minutes</div></div>
-        <div class="cell"><div class="num">00</div><div class="label">Seconds</div></div>
-      </div>
-    {% else %}
-      <div
-        class="countdown"
-        id="countdown"
-        data-deadline="2026-04-26T21:59:00Z"
-        aria-live="polite"
-      >
-        <div class="cell"><div class="num" id="cd-days">—</div><div class="label">Days</div></div>
-        <div class="cell"><div class="num" id="cd-hours">—</div><div class="label">Hours</div></div>
-        <div class="cell"><div class="num" id="cd-minutes">—</div><div class="label">Minutes</div></div>
-        <div class="cell"><div class="num" id="cd-seconds">—</div><div class="label">Seconds</div></div>
-      </div>
-    {% endif %}
-
-    <div class="stat">
-      <div class="num">{{ submission_count }}</div>
-      <div class="label">
-        {% if submission_count == 1 %}
-          essay submitted{% if not closed %} so far{% endif %}
-        {% else %}
-          essays submitted{% if not closed %} so far{% endif %}
-        {% endif %}
-      </div>
-    </div>
-
-    {% if closed %}
-      <p style="margin-top: 32px;">
-        <a href="/essays">Read all the essays</a>
-      </p>
-    {% endif %}
-
-    {% if not closed %}
-      <p style="margin-top: 32px;">
-        <a href="/submit">Submit your essay</a>
+      <p>
+        Submissions for the
+        <a href="/competition">Overdue Progress essay competition</a>
+        {% if closed %}closed{% else %}close{% endif %}
+        <strong>Monday, April 27, 2026, 12:59 AM EAT</strong>.
       </p>
 
-      <script>
-        (function () {
-          const el = document.getElementById("countdown");
-          const deadline = new Date(el.dataset.deadline).getTime();
-          const days = document.getElementById("cd-days");
-          const hours = document.getElementById("cd-hours");
-          const minutes = document.getElementById("cd-minutes");
-          const seconds = document.getElementById("cd-seconds");
+      {% if closed %}
+        <div class="countdown" aria-live="polite">
+          <div class="cell"><div class="num">00</div><div class="label">Days</div></div>
+          <div class="cell"><div class="num">00</div><div class="label">Hours</div></div>
+          <div class="cell"><div class="num">00</div><div class="label">Minutes</div></div>
+          <div class="cell"><div class="num">00</div><div class="label">Seconds</div></div>
+        </div>
+      {% else %}
+        <div
+          class="countdown"
+          id="countdown"
+          data-deadline="2026-04-26T21:59:00Z"
+          aria-live="polite"
+        >
+          <div class="cell"><div class="num" id="cd-days">—</div><div class="label">Days</div></div>
+          <div class="cell"><div class="num" id="cd-hours">—</div><div class="label">Hours</div></div>
+          <div class="cell"><div class="num" id="cd-minutes">—</div><div class="label">Minutes</div></div>
+          <div class="cell"><div class="num" id="cd-seconds">—</div><div class="label">Seconds</div></div>
+        </div>
+      {% endif %}
 
-          function pad(n) {
-            return n < 10 ? "0" + n : "" + n;
-          }
+      <div class="stat">
+        <div class="num">{{ submission_count }}</div>
+        <div class="label">
+          {% if submission_count == 1 %}
+            essay submitted{% if not closed %} so far{% endif %}
+          {% else %}
+            essays submitted{% if not closed %} so far{% endif %}
+          {% endif %}
+        </div>
+      </div>
 
-          function tick() {
-            const diff = deadline - Date.now();
-            if (diff <= 0) {
-              window.location.reload();
-              return false;
+      {% if closed %}
+        <p class="after"><a href="/essays">Read all the essays</a></p>
+      {% else %}
+        <p class="after"><a href="/submit">Submit your essay</a></p>
+
+        <script>
+          (function () {
+            const el = document.getElementById("countdown");
+            const deadline = new Date(el.dataset.deadline).getTime();
+            const days = document.getElementById("cd-days");
+            const hours = document.getElementById("cd-hours");
+            const minutes = document.getElementById("cd-minutes");
+            const seconds = document.getElementById("cd-seconds");
+
+            function pad(n) {
+              return n < 10 ? "0" + n : "" + n;
             }
-            const s = Math.floor(diff / 1000);
-            days.textContent = Math.floor(s / 86400);
-            hours.textContent = pad(Math.floor((s % 86400) / 3600));
-            minutes.textContent = pad(Math.floor((s % 3600) / 60));
-            seconds.textContent = pad(s % 60);
-            return true;
-          }
 
-          if (tick()) {
-            setInterval(tick, 1000);
-          }
-        })();
-      </script>
-    {% endif %}
-  </body>
-</html>
+            function tick() {
+              const diff = deadline - Date.now();
+              if (diff <= 0) {
+                window.location.reload();
+                return false;
+              }
+              const s = Math.floor(diff / 1000);
+              days.textContent = Math.floor(s / 86400);
+              hours.textContent = pad(Math.floor((s % 86400) / 3600));
+              minutes.textContent = pad(Math.floor((s % 3600) / 60));
+              seconds.textContent = pad(s % 60);
+              return true;
+            }
+
+            if (tick()) {
+              setInterval(tick, 1000);
+            }
+          })();
+        </script>
+      {% endif %}
+    </main>
+{% endblock %}

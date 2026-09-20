@@ -1,348 +1,46 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stats — Overdue Progress</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --ink: #1a1a1a;
-        --muted: #6b6b6b;
-        --rule: #e6e6e6;
-        --bg: #fafaf8;
-        --card: #ffffff;
-        --accent: #0b3d91;
-        --accent-soft: #e9eef9;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: "Source Serif 4", Georgia, serif;
-        font-size: 17px;
-        line-height: 1.6;
-      }
-      main {
-        max-width: 940px;
-        margin: 0 auto;
-        padding: 56px 24px 120px;
-      }
-      header.page {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        border-bottom: 1px solid var(--rule);
-        padding-bottom: 20px;
-        margin-bottom: 32px;
-      }
-      header.page h1 {
-        font-size: 30px;
-        font-weight: 700;
-        margin: 0;
-        letter-spacing: -0.01em;
-      }
-      header.page .right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      header.page a.nav,
-      header.page form.logout button {
-        font-family: inherit;
-        font-size: 13px;
-        color: var(--muted);
-        background: transparent;
-        border: 1px solid var(--rule);
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        text-decoration: none;
-      }
-      header.page a.nav:hover,
-      header.page form.logout button:hover {
-        color: var(--ink);
-        border-color: #bdbdbd;
-      }
-      header.page form.logout {
-        margin: 0;
-      }
-
-      section {
-        margin-bottom: 44px;
-      }
-      section > h2 {
-        font-size: 20px;
-        font-weight: 600;
-        margin: 0 0 16px;
-        letter-spacing: -0.005em;
-      }
-      section > p.note {
-        margin: -8px 0 16px;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .cards {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-      }
-      @media (max-width: 720px) {
-        .cards {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      @media (max-width: 480px) {
-        .cards {
-          grid-template-columns: 1fr;
-        }
-      }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        padding: 14px 16px;
-      }
-      .card .label {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-      .card .value {
-        font-size: 28px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        margin-top: 4px;
-        line-height: 1.2;
-      }
-      .card .sub {
-        font-size: 13px;
-        color: var(--muted);
-        margin-top: 2px;
-      }
-
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        padding: 22px 24px;
-      }
-
-      /* Word cloud */
-      .cloud {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 4px 14px;
-        line-height: 1.4;
-      }
-      .cloud .w {
-        color: var(--ink);
-        font-weight: 400;
-        white-space: nowrap;
-      }
-      .cloud .w .count {
-        color: var(--muted);
-        font-size: 0.55em;
-        margin-left: 2px;
-        font-variant-numeric: tabular-nums;
-        font-weight: 400;
-      }
-      .cloud-empty {
-        color: var(--muted);
-        font-style: italic;
-      }
-
-      /* Bar charts */
-      .bars {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .bar-row {
-        display: grid;
-        grid-template-columns: 110px 1fr 40px;
-        align-items: center;
-        gap: 12px;
-        font-size: 14px;
-      }
-      .bar-row .name {
-        color: var(--ink);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-variant-numeric: tabular-nums;
-      }
-      .bar-row .track {
-        position: relative;
-        height: 14px;
-        background: var(--accent-soft);
-        border-radius: 3px;
-        overflow: hidden;
-      }
-      .bar-row .fill {
-        position: absolute;
-        inset: 0 auto 0 0;
-        background: var(--accent);
-        border-radius: 3px;
-      }
-      .bar-row .count {
-        text-align: right;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* Hour-of-day vertical bars */
-      .hours {
-        display: grid;
-        grid-template-columns: repeat(24, 1fr);
-        gap: 3px;
-        align-items: end;
-        height: 120px;
-        margin-bottom: 6px;
-      }
-      .hour {
-        background: var(--accent-soft);
-        border-radius: 2px 2px 0 0;
-        min-height: 2px;
-        position: relative;
-      }
-      .hour .fill {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: var(--accent);
-        border-radius: 2px 2px 0 0;
-      }
-      .hour-axis {
-        display: grid;
-        grid-template-columns: repeat(24, 1fr);
-        gap: 3px;
-        font-size: 10px;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-        text-align: center;
-      }
-
-      .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-      }
-      @media (max-width: 720px) {
-        .grid-2 {
-          grid-template-columns: 1fr;
-        }
-        .bar-row {
-          grid-template-columns: 90px 1fr 36px;
-        }
-      }
-
-      .empty {
-        color: var(--muted);
-        font-style: italic;
-      }
-
-      .dup-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-      }
-      .dup-list li {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        align-items: baseline;
-        gap: 6px 16px;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--rule);
-      }
-      .dup-list li:first-child {
-        padding-top: 0;
-      }
-      .dup-list li:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-      }
-      .dup-name {
-        font-weight: 600;
-      }
-      .dup-count {
-        color: var(--muted);
-        font-size: 13px;
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-      }
-      .dup-emails {
-        grid-column: 1 / -1;
-        color: var(--muted);
-        font-size: 13px;
-        word-break: break-all;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <header class="page">
-        <h1>Stats</h1>
-        <div class="right">
-          <a class="nav" href="/admin">Submissions</a>
-          <form method="post" action="/admin/logout" class="logout">
-            <button type="submit">Sign out</button>
-          </form>
-        </div>
-      </header>
+{% extends "admin_base.html" %}
+{% block title %}Stats — Overdue Progress{% endblock %}
+{% block body %}
+    <main class="dash">
+      <h1>Stats</h1>
 
       {% if stats.total == 0 %}
         <p class="empty">No submissions yet.</p>
       {% else %}
 
       <section>
-        <div class="cards">
-          <div class="card">
+        <div class="kpis wide">
+          <div class="kpi">
             <div class="label">Total</div>
             <div class="value">{{ stats.total }}</div>
             <div class="sub">submission{{ "s" if stats.total != 1 else "" }}</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Authors</div>
             <div class="value">{{ stats.distinct_authors }}</div>
             <div class="sub">distinct names</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Email domains</div>
             <div class="value">{{ stats.distinct_email_domains }}</div>
             <div class="sub">distinct</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Link domains</div>
             <div class="value">{{ stats.distinct_link_domains }}</div>
             <div class="sub">distinct</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Final 24h</div>
             <div class="value">{{ stats.final_24h_before_deadline }}</div>
             <div class="sub">before deadline</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Last 24h</div>
             <div class="value">{{ stats.last_24h }}</div>
             <div class="sub">since now</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Edits</div>
             <div class="value">{{ stats.edits_total }}</div>
             <div class="sub">
@@ -352,9 +50,9 @@
               {% endif %}
             </div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Last submission</div>
-            <div class="value" style="font-size: 16px; font-weight: 400;">
+            <div class="value small">
               {% if stats.last_submission_at %}
                 <time datetime="{{ stats.last_submission_at }}">{{ stats.last_submission_at }}</time>
               {% else %}
@@ -363,7 +61,7 @@
             </div>
             <div class="sub">most recent</div>
           </div>
-          <div class="card">
+          <div class="kpi">
             <div class="label">Duplicates</div>
             <div class="value">{{ stats.duplicate_authors_count }}</div>
             <div class="sub">authors with multiple essays</div>
@@ -549,5 +247,5 @@
         });
       })();
     </script>
-  </body>
-</html>
+  
+{% endblock %}

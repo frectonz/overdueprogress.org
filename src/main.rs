@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod error;
 mod essays;
+mod pages;
 mod resend;
 mod stats;
 mod submissions;
@@ -127,6 +128,7 @@ fn build_router(state: AppState) -> Router {
         .merge(submissions::routes())
         .merge(stats::routes())
         .merge(essays::routes())
+        .merge(pages::routes())
         .merge(auth::routes())
         .fallback(static_fallback)
         .layer(DefaultBodyLimit::max(64 * 1024))
@@ -142,8 +144,7 @@ fn build_router(state: AppState) -> Router {
 const STATIC_CACHE_CONTROL: &str = "public, max-age=300, s-maxage=3600, must-revalidate";
 
 async fn static_fallback(headers: HeaderMap, uri: Uri) -> Response {
-    let raw = uri.path().trim_start_matches('/');
-    let path = if raw.is_empty() { "index.html" } else { raw };
+    let path = uri.path().trim_start_matches('/');
 
     if let Some(file) = StaticAssets::get(path) {
         return render_embed(&headers, file);

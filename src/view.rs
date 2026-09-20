@@ -28,6 +28,8 @@ impl View {
             Ok(Templates::get(name)
                 .and_then(|f| std::str::from_utf8(f.data.as_ref()).ok().map(String::from)))
         });
+        jinja.add_global("css_version", asset_version("site.css"));
+        jinja.add_global("admin_css_version", asset_version("admin.css"));
         Self {
             jinja: Arc::new(jinja),
         }
@@ -50,6 +52,12 @@ impl View {
             ViewError::Render(err)
         })
     }
+}
+
+fn asset_version(path: &str) -> String {
+    StaticAssets::get(path)
+        .map(|f| hex::encode(&f.metadata.sha256_hash()[..4]))
+        .unwrap_or_default()
 }
 
 #[derive(Debug, Error)]

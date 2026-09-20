@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0038ba" />
+    <title>{% block title %}{{ page_title }} — Overdue Progress{% endblock %}</title>
+    {% block head %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site.css?v={{ css_version }}" />
+    {% block styles %}{% endblock %}
+  </head>
+  <body>
+    {% block topbar %}
+    <header class="topbar">
+      <div>
+        <a class="brand" href="/">Overdue Progress</a>
+        {% block subtitle %}{% endblock %}
+      </div>
+      {% block topbar_action %}
+      <a class="pill" href="/winners">The winners</a>
+      {% endblock %}
+    </header>
+    {% endblock %}
+    {% block body %}{% endblock %}
+  </body>
+</html>

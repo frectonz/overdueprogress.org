@@ -1,581 +1,47 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin — Overdue Progress</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --ink: #1a1a1a;
-        --muted: #6b6b6b;
-        --soft: #8a8a8a;
-        --rule: #e6e6e6;
-        --rule-strong: #d6d6d6;
-        --bg: #fafaf8;
-        --card: #ffffff;
-        --row-alt: #fbfaf6;
-        --row-hover: #f3f0e8;
-        --row-selected: #e9eef9;
-        --accent: #0b3d91;
-        --accent-soft: #e9eef9;
-        --warn: #8a5a00;
-        --warn-bg: #fff4d8;
-        --danger: #a33;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: "Source Serif 4", Georgia, serif;
-        font-size: 15px;
-        line-height: 1.5;
-      }
-      main {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 32px 20px 96px;
-      }
-
-      header.page {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        border-bottom: 1px solid var(--rule);
-        padding-bottom: 16px;
-        margin-bottom: 20px;
-      }
-      header.page h1 {
-        font-size: 26px;
-        font-weight: 700;
-        margin: 0;
-        letter-spacing: -0.01em;
-      }
-      header.page .right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .btn {
-        font-family: inherit;
-        font-size: 13px;
-        color: var(--muted);
-        background: transparent;
-        border: 1px solid var(--rule);
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        text-decoration: none;
-        line-height: 1.2;
-      }
-      .btn:hover {
-        color: var(--ink);
-        border-color: #bdbdbd;
-      }
-      form.inline { margin: 0; display: inline; }
-
-      /* Stat strip */
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-        gap: 1px;
-        background: var(--rule);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        overflow: hidden;
-        margin-bottom: 20px;
-      }
-      @media (max-width: 1100px) {
-        .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      }
-      @media (max-width: 540px) {
-        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      }
-      .stat { background: var(--card); padding: 10px 12px; }
-      .stat .label {
-        font-size: 11px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-      .stat .value {
-        font-size: 22px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        line-height: 1.15;
-        margin-top: 2px;
-      }
-      .stat .sub {
-        font-size: 12px;
-        color: var(--soft);
-        margin-top: 2px;
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      /* Emails section */
-      .emails {
-        background: var(--card);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        padding: 14px 16px;
-        margin-bottom: 20px;
-      }
-      .emails-text h2 {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--muted);
-      }
-      .emails-text p {
-        margin: 4px 0 0;
-        font-size: 13px;
-        color: var(--soft);
-      }
-      .email-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-      }
-      .email-action {
-        font-family: inherit;
-        font-size: 13px;
-        color: var(--muted);
-        background: transparent;
-        border: 1px solid var(--rule);
-        padding: 7px 14px;
-        border-radius: 4px;
-        cursor: pointer;
-        line-height: 1.2;
-        white-space: nowrap;
-      }
-      .email-action:hover { color: var(--ink); border-color: #bdbdbd; }
-      .email-action[disabled] { opacity: 0.6; cursor: progress; }
-
-      /* Toolbar */
-      .toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-      .toolbar input[type="search"] {
-        font-family: inherit;
-        font-size: 14px;
-        padding: 7px 10px;
-        border: 1px solid var(--rule);
-        border-radius: 4px;
-        background: var(--card);
-        flex: 1 1 280px;
-        min-width: 200px;
-      }
-      .toolbar input[type="search"]:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-soft);
-      }
-      .toolbar .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-      .chip {
-        font-size: 12px;
-        color: var(--muted);
-        background: var(--card);
-        border: 1px solid var(--rule);
-        padding: 5px 10px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-family: inherit;
-        font-variant-numeric: tabular-nums;
-      }
-      .chip:hover { border-color: #bdbdbd; color: var(--ink); }
-      .chip.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-      .toolbar .visible-count {
-        margin-left: auto;
-        font-size: 12px;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-      }
-      .toolbar .hint {
-        font-size: 12px;
-        color: var(--soft);
-        font-variant-numeric: tabular-nums;
-      }
-      kbd {
-        font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        background: #f0eee5;
-        border: 1px solid var(--rule);
-        border-bottom-width: 2px;
-        border-radius: 3px;
-        padding: 1px 4px;
-        color: var(--ink);
-      }
-
-      /* Layout: table grows to full width until a row is selected */
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 18px;
-        align-items: start;
-      }
-      .layout.has-selection {
-        grid-template-columns: minmax(0, 1fr) 360px;
-      }
-      @media (max-width: 1100px) {
-        .layout, .layout.has-selection { grid-template-columns: 1fr; }
-      }
-      aside.detail { display: none; }
-      .layout.has-selection aside.detail { display: flex; }
-
-      /* Table */
-      .table-wrap {
-        background: var(--card);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      table.subs {
-        width: 100%;
-        min-width: 760px;
-        border-collapse: collapse;
-        font-size: 13.5px;
-      }
-      table.subs thead th {
-        background: #f5f3ec;
-        text-align: left;
-        font-weight: 600;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--muted);
-        padding: 9px 10px;
-        border-bottom: 1px solid var(--rule-strong);
-        white-space: nowrap;
-        cursor: pointer;
-        user-select: none;
-      }
-      table.subs thead th[data-sort]:hover { color: var(--ink); }
-      table.subs thead th .arrow {
-        opacity: 0;
-        margin-left: 4px;
-        font-size: 10px;
-      }
-      table.subs thead th.sort-asc .arrow,
-      table.subs thead th.sort-desc .arrow { opacity: 1; }
-
-      table.subs tbody tr.row {
-        border-top: 1px solid var(--rule);
-        cursor: pointer;
-      }
-      table.subs tbody tr.row:nth-child(odd) { background: var(--row-alt); }
-      table.subs tbody tr.row:hover { background: var(--row-hover); }
-      table.subs tbody tr.row.selected,
-      table.subs tbody tr.row.selected:hover {
-        background: var(--row-selected);
-        box-shadow: inset 3px 0 0 var(--accent);
-      }
-
-      table.subs td {
-        padding: 8px 10px;
-        vertical-align: top;
-      }
-      table.subs td.num {
-        font-variant-numeric: tabular-nums;
-        color: var(--muted);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-      table.subs td.title { font-weight: 600; max-width: 380px; }
-      table.subs td.title .t {
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      table.subs td.title .desc-preview {
-        display: block;
-        font-weight: 400;
-        color: var(--muted);
-        font-size: 12.5px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-top: 2px;
-      }
-      table.subs td.author { white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
-      table.subs td.email { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; color: var(--muted); }
-      table.subs td.email a { color: inherit; text-decoration: none; border-bottom: 1px dotted #c4c4c4; }
-      table.subs td.email a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-      table.subs td.domain { font-size: 12px; color: var(--muted); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
-      table.subs td.domain a { color: var(--accent); text-decoration: none; }
-      table.subs td.domain a:hover { text-decoration: underline; }
-      table.subs td.when {
-        white-space: nowrap;
-        font-variant-numeric: tabular-nums;
-        font-size: 12.5px;
-        color: var(--muted);
-      }
-      table.subs td.center { text-align: center; font-variant-numeric: tabular-nums; }
-
-      .badge {
-        display: inline-block;
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        padding: 1px 6px;
-        border-radius: 3px;
-        margin-left: 6px;
-        vertical-align: 1px;
-      }
-      .badge.dup { background: var(--warn-bg); color: var(--warn); }
-      .badge.edits { background: #f0eee5; color: var(--ink); font-weight: 600; }
-
-      /* Read / unread row treatment */
-      .unread-dot {
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        background: var(--accent);
-        border-radius: 50%;
-        margin-right: 6px;
-        vertical-align: 1px;
-      }
-      table.subs tbody tr.row[data-reviewed="0"] td.title .t {
-        font-weight: 700;
-      }
-      table.subs tbody tr.row[data-reviewed="1"] td.num,
-      table.subs tbody tr.row[data-reviewed="1"] td.author,
-      table.subs tbody tr.row[data-reviewed="1"] td.title .t,
-      table.subs tbody tr.row[data-reviewed="1"] td.email {
-        color: var(--soft);
-      }
-      table.subs tbody tr.row[data-reviewed="1"] td.title .t {
-        font-weight: 500;
-      }
-
-      /* Detail panel */
-      aside.detail {
-        position: sticky;
-        top: 18px;
-        background: var(--card);
-        border: 1px solid var(--rule);
-        border-radius: 6px;
-        max-height: calc(100vh - 36px);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      aside.detail header.dh {
-        padding: 16px 20px 12px;
-        border-bottom: 1px solid var(--rule);
-        background: linear-gradient(180deg, #fdfdfa, var(--card));
-      }
-      aside.detail header.dh .meta-line {
-        font-size: 11.5px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        font-variant-numeric: tabular-nums;
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      aside.detail header.dh .close {
-        margin-left: auto;
-        cursor: pointer;
-        background: transparent;
-        border: 1px solid var(--rule);
-        border-radius: 3px;
-        padding: 2px 6px;
-        font-size: 11px;
-        color: var(--muted);
-        font-family: inherit;
-      }
-      aside.detail header.dh .close:hover { color: var(--ink); border-color: #bdbdbd; }
-      aside.detail header.dh h2 {
-        font-size: 19px;
-        font-weight: 700;
-        margin: 0;
-        line-height: 1.3;
-        letter-spacing: -0.005em;
-      }
-      aside.detail .body {
-        padding: 14px 20px 18px;
-        overflow-y: auto;
-        flex: 1 1 auto;
-      }
-      aside.detail dl.meta {
-        margin: 0 0 16px;
-        display: grid;
-        grid-template-columns: 84px 1fr;
-        gap: 4px 12px;
-        font-size: 13px;
-      }
-      aside.detail dl.meta dt { color: var(--muted); }
-      aside.detail dl.meta dd { margin: 0; word-break: break-word; }
-      aside.detail dl.meta dd a { color: var(--accent); text-decoration: none; }
-      aside.detail dl.meta dd a:hover { text-decoration: underline; }
-      aside.detail .desc-label {
-        font-size: 11px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin: 0 0 6px;
-      }
-      aside.detail .desc {
-        white-space: pre-wrap;
-        font-size: 15px;
-        line-height: 1.65;
-        color: #2a2a2a;
-        padding: 12px 14px;
-        background: #fbfaf6;
-        border: 1px solid var(--rule);
-        border-radius: 5px;
-      }
-      aside.detail footer.actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        padding: 12px 20px;
-        border-top: 1px solid var(--rule);
-        background: #fdfdfa;
-      }
-      aside.detail footer.actions a,
-      aside.detail footer.actions button {
-        font-family: inherit;
-        font-size: 12.5px;
-        background: var(--card);
-        border: 1px solid var(--rule);
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        color: var(--ink);
-        text-decoration: none;
-        line-height: 1.2;
-      }
-      aside.detail footer.actions a:hover,
-      aside.detail footer.actions button:hover {
-        border-color: #bdbdbd;
-      }
-      aside.detail footer.actions a.primary {
-        color: var(--accent);
-        border-color: #cfd8eb;
-        background: var(--accent-soft);
-      }
-      aside.detail footer.actions button.review-toggle {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        font-weight: 600;
-      }
-      aside.detail footer.actions button.review-toggle:hover {
-        background: #082b65;
-        border-color: #082b65;
-      }
-      aside.detail footer.actions button.review-toggle[data-reviewed="1"] {
-        background: var(--card);
-        color: var(--muted);
-        border-color: var(--rule);
-        font-weight: 400;
-      }
-      aside.detail footer.actions button.review-toggle[data-reviewed="1"]:hover {
-        color: var(--ink);
-        border-color: #bdbdbd;
-      }
-      aside.detail footer.actions button.review-toggle[disabled] { opacity: 0.6; cursor: progress; }
-      aside.detail footer.actions button.delete {
-        color: var(--danger);
-        margin-left: auto;
-      }
-      aside.detail footer.actions button.delete:hover {
-        color: #fff;
-        background: var(--danger);
-        border-color: var(--danger);
-      }
-
-      .empty {
-        color: var(--muted);
-        font-style: italic;
-        margin: 60px 0;
-        text-align: center;
-      }
-      .no-match {
-        display: none;
-        color: var(--muted);
-        font-style: italic;
-        text-align: center;
-        padding: 32px 0;
-      }
-      .no-match.show { display: block; }
-    </style>
-  </head>
-  <body data-csrf="{{ csrf_token }}">
-    <main>
-      <header class="page">
-        <h1>Submissions</h1>
-        <div class="right">
-          <a class="btn" href="/admin/stats">Stats</a>
-          <form method="post" action="/admin/logout" class="inline">
-            <button type="submit" class="btn">Sign out</button>
-          </form>
-        </div>
-      </header>
+{% extends "admin_base.html" %}
+{% block title %}Admin — Overdue Progress{% endblock %}
+{% block body %}
+    <main class="dash" data-csrf="{{ csrf_token }}">
+      <h1>Submissions</h1>
 
       {% if rows %}
-      <section class="stats">
-        <div class="stat">
+      <section class="kpis">
+        <div class="kpi">
           <div class="label">Total</div>
           <div class="value">{{ stats.total }}</div>
           <div class="sub">submission{{ "s" if stats.total != 1 else "" }}</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Unread</div>
           <div class="value" id="stat-unread">{{ stats.unreviewed }}</div>
           <div class="sub">to review</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Reviewed</div>
           <div class="value" id="stat-reviewed">{{ stats.reviewed }}</div>
           <div class="sub">marked read</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Authors</div>
           <div class="value">{{ stats.distinct_authors }}</div>
           <div class="sub">distinct</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Duplicates</div>
           <div class="value">{{ stats.duplicate_authors }}</div>
           <div class="sub">authors with 2+</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Email domains</div>
           <div class="value">{{ stats.distinct_email_domains }}</div>
           <div class="sub">distinct</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Link domains</div>
           <div class="value">{{ stats.distinct_link_domains }}</div>
           <div class="sub">distinct</div>
         </div>
-        <div class="stat">
+        <div class="kpi">
           <div class="label">Edits</div>
           <div class="value">{{ stats.edits_total }}</div>
           <div class="sub">on {{ stats.submissions_edited }} submission{{ "s" if stats.submissions_edited != 1 else "" }}</div>
@@ -588,12 +54,12 @@
           <p>Broadcasts to all submitters, plus the targeted results emails.</p>
         </div>
         <div class="email-actions">
-          <button type="button" class="email-action" id="broadcast-btn">Send timeline update</button>
-          <button type="button" class="email-action" id="broadcast-essays-btn">Send essays announcement</button>
-          <button type="button" class="email-action" id="broadcast-winners-btn">Email the 3 winners</button>
-          <button type="button" class="email-action" id="broadcast-top15-btn">Email the top 15</button>
-          <button type="button" class="email-action" id="broadcast-results-btn">Email everyone else</button>
-          <a class="email-action" href="/admin/winners">View winner codes</a>
+          <button type="button" class="btn" id="broadcast-btn">Send timeline update</button>
+          <button type="button" class="btn" id="broadcast-essays-btn">Send essays announcement</button>
+          <button type="button" class="btn" id="broadcast-winners-btn">Email the 3 winners</button>
+          <button type="button" class="btn" id="broadcast-top15-btn">Email the top 15</button>
+          <button type="button" class="btn" id="broadcast-results-btn">Email everyone else</button>
+          <a class="btn" href="/admin/winners">View winner codes</a>
         </div>
       </section>
 
@@ -632,7 +98,7 @@
             <tbody>
               {% for r in rows %}
                 <tr
-                  class="row"
+                  class="sub"
                   data-id="{{ r.id }}"
                   data-created="{{ r.created_at }}"
                   data-author="{{ r.author | lower }}"
@@ -692,7 +158,7 @@
                 <time datetime="{{ r.created_at }}">{{ r.created_at }}</time>
                 {% if r.is_duplicate_author %}<span class="badge dup">dup</span>{% endif %}
                 {% if r.edits > 0 %}<span class="badge edits">{{ r.edits }} edit{{ "s" if r.edits != 1 else "" }}</span>{% endif %}
-                <button class="close" type="button" aria-label="Close" data-close>Close</button>
+                <button class="btn close" type="button" aria-label="Close" data-close>Close</button>
               </div>
               <h2>{{ r.title }}</h2>
             </header>
@@ -709,24 +175,23 @@
             </div>
             <footer class="actions">
               <button
-                class="review-toggle"
+                class="btn primary review-toggle"
                 type="button"
                 data-id="{{ r.id }}"
                 data-reviewed="{{ '1' if r.reviewed else '0' }}"
               >
                 {% if r.reviewed %}Mark as unread{% else %}Mark as read{% endif %}
               </button>
-              <a class="primary" href="{{ r.link }}" target="_blank" rel="noopener">Open essay</a>
-              <a href="/admin/submissions/{{ r.id }}/edit">Edit</a>
-              <a href="/admin/submissions/{{ r.id }}/history">History</a>
+              <a class="btn" href="{{ r.link }}" target="_blank" rel="noopener">Open essay</a>
+              <a class="btn" href="/admin/submissions/{{ r.id }}/edit">Edit</a>
+              <a class="btn" href="/admin/submissions/{{ r.id }}/history">History</a>
               <form
                 method="post"
                 action="/admin/submissions/{{ r.id }}/delete"
-                class="inline"
                 onsubmit="return confirm('Delete submission #{{ r.id }}? This cannot be undone.');"
               >
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                <button type="submit" class="delete">Delete</button>
+                <button type="submit" class="btn danger delete">Delete</button>
               </form>
             </footer>
           </template>
@@ -756,7 +221,7 @@
             btn.textContent = "Sending…";
             try {
               const params = new URLSearchParams();
-              params.append("csrf_token", document.body.dataset.csrf || "");
+              params.append("csrf_token", document.querySelector("main.dash").dataset.csrf || "");
               const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -822,7 +287,7 @@
         const table = document.getElementById("subs");
         if (!table) return;
         const tbody = table.querySelector("tbody");
-        const rows = Array.from(tbody.querySelectorAll("tr.row"));
+        const rows = Array.from(tbody.querySelectorAll("tr.sub"));
         const visibleCount = document.getElementById("visible-count");
         const noMatch = document.getElementById("no-match");
         const detail = document.getElementById("detail");
@@ -906,7 +371,7 @@
               reviewBtn.disabled = true;
               try {
                 const params = new URLSearchParams();
-                params.append("csrf_token", document.body.dataset.csrf || "");
+                params.append("csrf_token", document.querySelector("main.dash").dataset.csrf || "");
                 params.append("state", target);
                 const res = await fetch("/admin/submissions/" + id + "/review", {
                   method: "POST",
@@ -1050,5 +515,5 @@
         });
       })();
     </script>
-  </body>
-</html>
+  
+{% endblock %}

@@ -453,7 +453,7 @@ async fn admin_page_renders_table_for_authed_session() {
         html.contains("badge edits"),
         "edit count badge should render"
     );
-    assert!(html.contains("class=\"stat\""), "stat strip should render");
+    assert!(html.contains("class=\"kpi\""), "stat strip should render");
 }
 
 #[tokio::test]

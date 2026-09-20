@@ -1,19 +1,34 @@
-{% extends "essays_base.html" %}
+{% extends "base.html" %}
+{% block head %}
+    <meta
+      name="description"
+      content="Essays on {{ title }} submitted to Overdue Progress's first essay competition."
+    />
+{% endblock %}
+{% block subtitle %}<a class="sub" href="/essays">The Essays</a>{% endblock %}
 {% block body %}
-    <a class="winners-banner" href="/winners">
-      The winners of our first essay competition are in.
-      <span class="cue">Read the three winning essays</span>.
-    </a>
-
-    <a class="back" href="/essays">Back to all essays</a>
-    <h1>{{ title }}</h1>
-
-    {% for essay in essays %}
-    <div class="essay">
-      <div class="essay-title">
-        <a href="{{ essay.link }}" target="_blank" rel="noopener">{{ essay.title }}</a>
+    <main class="sheet marked">
+      <div class="sheet-head">
+        <h1>{{ title }}</h1>
+        <div class="sheet-count" aria-label="{{ essays | length }} essays">{{ essays | length }}</div>
       </div>
-      <div class="essay-meta">by {{ essay.author }}</div>
-    </div>
-    {% endfor %}
+
+      <ul class="rows">
+        {% for essay in essays %}
+        <li>
+          <a class="row" href="{{ essay.link }}" target="_blank" rel="noopener">
+            <span>
+              <span class="row-title">{{ essay.title }}</span>
+              <span class="row-meta">by {{ essay.author }}</span>
+            </span>
+            <span class="row-aside">
+              <span class="row-go" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M7.5 6H14v6.5" /></svg>
+              </span>
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </main>
 {% endblock %}

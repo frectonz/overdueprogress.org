@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block styles %}
+    <link rel="stylesheet" href="/admin.css?v={{ admin_css_version }}" />
+{% endblock %}
+{% block subtitle %}<span class="sub">Admin</span>{% endblock %}
+{% block topbar_action %}
+      <nav class="nav">
+        <a class="btn" href="/admin">Submissions</a>
+        <a class="btn" href="/admin/stats">Stats</a>
+        <form method="post" action="/admin/logout">
+          <button type="submit" class="btn">Sign out</button>
+        </form>
+      </nav>
+{% endblock %}

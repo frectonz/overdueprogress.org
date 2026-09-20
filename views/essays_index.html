@@ -1,33 +1,43 @@
-{% extends "essays_base.html" %}
+{% extends "base.html" %}
+{% block head %}
+    <meta
+      name="description"
+      content="All {{ total }} essays submitted to Overdue Progress's first essay competition, grouped by theme."
+    />
+{% endblock %}
+{% block subtitle %}<span class="sub">The Essays</span>{% endblock %}
 {% block body %}
-    <a class="winners-banner" href="/winners">
-      The winners of our first essay competition are in.
-      <span class="cue">Read the three winning essays</span>.
-    </a>
-
-    <h1>The Essays</h1>
-
-    <p class="lead">
-      All {{ total }} essays from our first
-      <a href="/competition">essay competition</a> are now available below,
-      grouped by theme.
-    </p>
-
-    <p class="lead">
-      The three winners have been announced.
-      <a href="/winners">See who won.</a>
-    </p>
-
-    <p class="lead">
-      New here? Start with <a href="/">what Overdue Progress is</a>.
-    </p>
-
-    {% for cat in categories %}
-    <div class="cat">
-      <div class="cat-title">
-        <a href="/essays/{{ cat.slug }}">{{ cat.title }}</a>
-        <span class="count">({{ cat.count }})</span>
+    <main class="sheet marked">
+      <div class="sheet-head">
+        <h1>The Essays</h1>
+        <div class="sheet-count" aria-label="{{ total }} essays">{{ total }}</div>
       </div>
-    </div>
-    {% endfor %}
+
+      <div class="sheet-brief prose">
+        <h2>Brief</h2>
+        <p>
+          Every essay submitted to the first
+          <a href="/competition">Overdue Progress essay competition</a>, grouped
+          by theme. Each one opens in the author's own document. The three
+          winners and the fifteen finalists are on the
+          <a href="/winners">winners page</a>.
+        </p>
+      </div>
+
+      <ul class="rows">
+        {% for cat in categories %}
+        <li>
+          <a class="row" href="/essays/{{ cat.slug }}">
+            <span class="row-title">{{ cat.title }}</span>
+            <span class="row-aside">
+              <span>{{ cat.count }} {% if cat.count == 1 %}essay{% else %}essays{% endif %}</span>
+              <span class="row-go" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5" /></svg>
+              </span>
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </main>
 {% endblock %}
