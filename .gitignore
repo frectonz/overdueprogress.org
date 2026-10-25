@@ -1,13 +1,5 @@
 .direnv
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-.env
 result
-
-shortlist.json
-shortlist.csv
 
 node_modules
 dist

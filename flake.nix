@@ -3,26 +3,86 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
-    blueprint.url = "github:numtide/blueprint";
-    blueprint.inputs.nixpkgs.follows = "nixpkgs";
-
-    disko.url = "github:nix-community/disko";
-    disko.inputs.nixpkgs.follows = "nixpkgs";
-
-    sops-nix.url = "github:mic92/sops-nix";
-    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
-
-    srvos.url = "github:nix-community/srvos";
-    srvos.inputs.nixpkgs.follows = "nixpkgs";
-
-    nix-index-database.url = "github:nix-community/nix-index-database";
-    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    inputs:
-    inputs.blueprint {
-      inherit inputs;
+    { self, nixpkgs }:
+    let
+      forAllSystems =
+        fn:
+        let
+          systems = [
+            "x86_64-linux"
+            "aarch64-darwin"
+          ];
+          overlays = [ ];
+        in
+        nixpkgs.lib.genAttrs systems (
+          system:
+          fn (
+            import nixpkgs {
+              inherit system overlays;
+            }
+          )
+        );
+    in
+    {
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.pnpm
+            pkgs.nodejs
+            pkgs.emmet-ls
+            pkgs.astro-language-server
+            pkgs.typescript-language-server
+            pkgs.vscode-langservers-extracted
+          ];
+        };
+      });
+
+      formatter = forAllSystems (
+        pkgs:
+        let
+          prettier = pkgs.writeShellApplication {
+            name = "prettier";
+            runtimeInputs = [
+              pkgs.nodejs
+              pkgs.pnpm
+            ];
+            text = ''
+              exec pnpm exec prettier "$@"
+            '';
+          };
+        in
+        pkgs.treefmt.withConfig {
+          runtimeInputs = [
+            pkgs.nixfmt
+            prettier
+          ];
+          settings = {
+            on-unmatched = "info";
+            global.excludes = [ "pnpm-lock.yaml" ];
+            formatter.nixfmt = {
+              command = "nixfmt";
+              includes = [ "*.nix" ];
+            };
+            formatter.prettier = {
+              command = "prettier";
+              options = [ "--write" ];
+              includes = [
+                "*.astro"
+                "*.ts"
+                "*.mjs"
+                "*.json"
+                "*.jsonc"
+                "*.css"
+                "*.md"
+                "*.yml"
+                ".prettierrc"
+              ];
+            };
+          };
+        }
+      );
     };
 }

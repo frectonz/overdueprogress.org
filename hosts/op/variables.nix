@@ -1,3 +1,0 @@
-{
-  sshHost = "ssh.overdueprogress.org";
-}

@@ -3,4 +3,3 @@ node_modules
 .astro
 .wrangler
 pnpm-lock.yaml
-hosts
