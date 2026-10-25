@@ -124,6 +124,8 @@ let
 in
 pkgs.mkShellNoCC {
   packages = [
+    pkgs.nodejs
+    pkgs.pnpm
     rust
     pkgs.sqlx-cli
     pkgs.sqlite

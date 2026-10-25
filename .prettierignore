@@ -1,0 +1,13 @@
+dist
+node_modules
+.astro
+pnpm-lock.yaml
+target
+views
+static
+hosts
+modules
+packages
+.sqlx
+migrations
+scripts

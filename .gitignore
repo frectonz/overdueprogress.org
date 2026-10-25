@@ -9,3 +9,8 @@ result
 
 shortlist.json
 shortlist.csv
+
+node_modules
+dist
+.astro
+.wrangler

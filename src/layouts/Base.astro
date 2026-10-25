@@ -1,0 +1,67 @@
+---
+interface Props {
+  title?: string;
+  pageTitle?: string;
+  description?: string;
+  subtitle?: string;
+  subtitleHref?: string;
+  action?: { href: string; label: string } | null;
+  topbar?: boolean;
+}
+
+const {
+  pageTitle,
+  title = pageTitle ? `${pageTitle} — Overdue Progress` : "Overdue Progress",
+  description,
+  subtitle,
+  subtitleHref,
+  action = { href: "/winners", label: "The winners" },
+  topbar = true,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0038ba" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    {topbar && (
+      <header class="topbar">
+        <div>
+          <a class="brand" href="/">
+            Overdue Progress
+          </a>
+          {subtitle &&
+            (subtitleHref ? (
+              <a class="sub" href={subtitleHref}>
+                {subtitle}
+              </a>
+            ) : (
+              <span class="sub">{subtitle}</span>
+            ))}
+        </div>
+        {action && (
+          <a class="pill" href={action.href}>
+            {action.label}
+          </a>
+        )}
+      </header>
+    )}
+    <slot />
+  </body>
+</html>

@@ -1,5 +1,5 @@
 {
-  description = "Overdue Progress submission server";
+  description = "Overdue Progress";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

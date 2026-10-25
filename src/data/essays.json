@@ -1,0 +1,499 @@
+[
+  {
+    "id": 2,
+    "title": "Why Ethiopia’s Financial System Produces Debt but Not Innovation and How Venture Capital Could Fix the Missing Layer",
+    "author": "Waklarua (a.k.a Yohannes)",
+    "link": "https://drive.google.com/file/d/1FmWSb5YJraZNdnK89cObVnZgB4gOUuCz/view?usp=sharing",
+    "category": "money"
+  },
+  {
+    "id": 3,
+    "title": "The Emergence of Mobile Money in Ethiopia and the Fourteen Years It Took Us to Catch Up",
+    "author": "Abdelselam K.(yoab)",
+    "link": "https://yoab-writes.framer.website/article/the-emergence-of-mobile-money-in-ethiopia",
+    "category": "money"
+  },
+  {
+    "id": 4,
+    "title": "Beyond Startups: Why Entrepreneurship Alone Can Not Solve Unemployment in Africa.",
+    "author": "Ayisha Issaka",
+    "link": "https://jummei.substack.com/p/beyond-startups-why-entrepreneurship",
+    "category": "africa"
+  },
+  {
+    "id": 5,
+    "title": "\"Smuggling Knowledge\"",
+    "author": "Eyosiyas Fikremariam Aragie",
+    "link": "https://docs.google.com/document/d/1LVZ1cblI76uGx3ybquNl3tXznzQ3RI-RuxiNICdGiz4/edit?usp=drivesdk",
+    "category": "personal"
+  },
+  {
+    "id": 6,
+    "title": "The Diploma Factory",
+    "author": "Alazar",
+    "link": "https://medium.com/@abenid88/how-ethiopia-built-a-higher-education-machine-that-produces-graduates-the-economy-cannot-use-and-602aa5ab2ecd",
+    "category": "education"
+  },
+  {
+    "id": 7,
+    "title": "The Predictable Unpredictability: Why Anbessa City Bus Fails and How to Fix It Without a Single New Road",
+    "author": "Kaleab Abayneh",
+    "link": "https://docs.google.com/document/d/1Um8vV1KnWP8gZOdBuX76TX2o3I71b4nX/edit?usp=drivesdk&ouid=101270251424624462973&rtpof=true&sd=true",
+    "category": "cities"
+  },
+  {
+    "id": 10,
+    "title": "Compliance as a Service",
+    "author": "Nasredin",
+    "link": "https://docs.google.com/document/d/1PjW9OlFvYN5Rj8SSRrV7lW8yCSna9EaoDsOKsf776Gw/edit?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 11,
+    "title": "Why Are We Still Here? The Anatomy of Overdue Progress",
+    "author": "R.T",
+    "link": "https://medium.com/@rainydaymode/why-are-we-still-here-the-anatomy-of-overdue-progress-8381748af660",
+    "category": "money"
+  },
+  {
+    "id": 12,
+    "title": "Ethiopia’s Education, What Recent Reforms Are Optimizing For And Why the Data Says It’s Wrong",
+    "author": "Dawit Mengistu",
+    "link": "https://www.notion.so/Ethiopia-s-Education-What-Recent-Reforms-Are-Optimizing-For-And-Why-the-Data-Says-It-s-Wrong-348189ac360480cd9d9fed3b15029469",
+    "category": "education"
+  },
+  {
+    "id": 13,
+    "title": "How Ethiopia’s financing Structure Makes Essential Medicines Regressively Expensive",
+    "author": "Dawit Abrham",
+    "link": "https://docs.google.com/document/d/15jhJ2gKfVn1sDrT0-4ahlsPIVzV3DEbhh5FzHk-vZhc/edit?usp=sharing",
+    "category": "health"
+  },
+  {
+    "id": 14,
+    "title": "Africa in the era of AI: Opportunities and challenges.",
+    "author": "Hewan Getachew",
+    "link": "https://hewan272829.substack.com/p/africa-in-the-era-of-ai-opportunities",
+    "category": "energy"
+  },
+  {
+    "id": 15,
+    "title": "The screeens between us:  what I learbed about childhood,technology and growing up",
+    "author": "Widad Dawit",
+    "link": "https://open.substack.com/pub/widydawit/p/the-screens-between-us-what-i-learned?utm_source=share&utm_medium=android&r=391q33",
+    "category": "energy"
+  },
+  {
+    "id": 17,
+    "title": "Two Health Systems, One City: The Great Divide in Addis Ababa",
+    "author": "Tirsit Tilahun Abebe",
+    "link": "https://docs.google.com/document/d/1f1ynRK8KdHf0_QgDCSAF832hq94_9OnkQKXaEQrEeB4/edit?usp=sharing",
+    "category": "health"
+  },
+  {
+    "id": 18,
+    "title": "King susenyos was right to convert his religion.",
+    "author": "Abraham Kassa",
+    "link": "https://docs.google.com/document/d/1jDFezqvNX15UPXYqh7BKEb5iKo06YICw/edit?usp=sharing&ouid=104263903420860751057&rtpof=true&sd=true",
+    "category": "society"
+  },
+  {
+    "id": 19,
+    "title": "Lava Batteries",
+    "author": "Omer Abdulaziz",
+    "link": "https://vesl.et/logs/lava-batteries/",
+    "category": "energy"
+  },
+  {
+    "id": 20,
+    "title": "The EEU is Killing the GERD: How One Incompetent Utility Company is Sabotaging Ethiopia’s Future",
+    "author": "Amir Aman",
+    "link": "https://www.asgerami.com/blog/the-eeu-is-killing-the-gerd",
+    "category": "energy"
+  },
+  {
+    "id": 21,
+    "title": "When Efficiency Becomes a Product",
+    "author": "Lemari",
+    "link": "https://lemariwrites.substack.com/p/when-efficiency-becomes-a-product",
+    "category": "state"
+  },
+  {
+    "id": 24,
+    "title": "Why the Balanced Scorecard(BSC) Falls Short in Practice: A Short Case Study of an Ethiopian Public Institution",
+    "author": "Bemnet Ayenew",
+    "link": "https://docs.google.com/document/d/1iqu7ujf7doU6NjKdjspZ2GR_ZypWMhhyEX2RWk7BLFA/edit?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 25,
+    "title": "Ethiopia’s Condominium Lottery Solved Housing by Putting It in the Wrong Place",
+    "author": "Dagmawite Tsega",
+    "link": "https://medium.com/@dagirose08860438/ethiopias-condominium-lottery-solved-housing-by-putting-it-in-the-wrong-place-67fb28ed1961",
+    "category": "cities"
+  },
+  {
+    "id": 26,
+    "title": "Our Education System: A Controversial take",
+    "author": "Sunper Asnake",
+    "link": "https://docs.google.com/document/d/1WSI3DvqYT75RfcWM3xMMPBc84u_SuF77q0-2qM5T68c/edit?usp=sharing",
+    "category": "education"
+  },
+  {
+    "id": 27,
+    "title": "Adulthood defferd: are we the adults we dreamt of becoming",
+    "author": "Kidus yohannes",
+    "link": "https://docs.google.com/document/d/1ExCIfmWVAIBUeLRwJsbc-VR5eb8Yj7DD/edit?usp=sharing&ouid=113284633146675723253&rtpof=true&sd=true",
+    "category": "society"
+  },
+  {
+    "id": 28,
+    "title": "Was Emperor Tewodros II a hero?",
+    "author": "Kal Hayelom",
+    "link": "https://docs.google.com/document/d/15Q8I23Cvq56AFt2LzomZWw1v5bPJ9bX6NSE8wSi0Cx4/edit?usp=sharing",
+    "category": "society"
+  },
+  {
+    "id": 30,
+    "title": "The Mechanism of the birr :how Ethiopian's foreign exchange reform redefines progress",
+    "author": "Diriba Motuma Amdila",
+    "link": "https://docs.google.com/document/d/1LkIHJDZWXmRtxz_hCAZH49iZOlmv0kt4tP0s8zHWXgw/edit?usp=sharing",
+    "category": "money"
+  },
+  {
+    "id": 31,
+    "title": "The Queue",
+    "author": "D-ave",
+    "link": "https://tealeaves.netlify.app/ethiopia/forex/trade/progress/2026/04/24/the-queue/",
+    "category": "money"
+  },
+  {
+    "id": 32,
+    "title": "Escaping the System: The Ethiopian Airlines Protocol",
+    "author": "Yisak Abraham",
+    "link": "https://docs.google.com/document/d/1MhbWUMvm-ENSQUZ64u2YY0EJtfxEY2nsKnUiB31wCfM/edit?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 33,
+    "title": "Echoes Without Inquiry",
+    "author": "Robel Tilahun",
+    "link": "https://www.robeltilahun.com/blogs?slug=echoes-without-inquiry",
+    "category": "education"
+  },
+  {
+    "id": 36,
+    "title": "Ethiopia’s Hidden Advantage in the AI Age",
+    "author": "Mikiyas Shiferaw Tumsa",
+    "link": "https://mikiyasverse.substack.com/p/ethiopias-hidden-advantage-in-the",
+    "category": "energy"
+  },
+  {
+    "id": 41,
+    "title": "Friction of Progress: Risk Transmission and the Nature of Street Crime in Addis Ababa",
+    "author": "yared",
+    "link": "https://docs.google.com/document/d/13OtfAk4QOO_3TCRUgsKgNL9MRRTI0_jYjqBlpe4zBwI/edit?usp=sharing",
+    "category": "cities"
+  },
+  {
+    "id": 42,
+    "title": "Ethiopia's Graduation Paradox",
+    "author": "Duresa Guye",
+    "link": "https://open.substack.com/pub/duresa/p/ethiopias-graduation-paradox-the?r=48ifg4&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true",
+    "category": "education"
+  },
+  {
+    "id": 43,
+    "title": "Systems and Standards: A Lesson From the Ethiopian Commodity Exchange",
+    "author": "Kidus F.mariam",
+    "link": "https://docs.google.com/document/d/1kASuYI5JtctUCd1Do3pyHLaEKiDurxOSIRDHlAkhN9U/edit?tab=t.0",
+    "category": "agriculture"
+  },
+  {
+    "id": 44,
+    "title": "The forgotten truth",
+    "author": "Natalie Deneke",
+    "link": "https://1drv.ms/b/c/CAD524A87AB28423/IQDlsfrIkZgzQ4wAKRZt4WfqAeNfCD0vB9FKJgKbNunEjuo",
+    "category": "society"
+  },
+  {
+    "id": 45,
+    "title": "The Hardware Failure: Why Teff Milling is the Core of Ethiopian Macroeconomics",
+    "author": "Eyosiyas",
+    "link": "https://eyosimak.github.io/mak-progress-essay/",
+    "category": "agriculture"
+  },
+  {
+    "id": 47,
+    "title": "The long road to your table",
+    "author": "Abel",
+    "link": "https://docs.google.com/document/d/1UnMj8W-xkswuCa5O5eptyITxHkL7u3RlmwdTOA6Yqgs/edit?usp=drivesdk",
+    "category": "agriculture"
+  },
+  {
+    "id": 48,
+    "title": "The Day Waiting Stopped",
+    "author": "Betemariam Tiruha",
+    "link": "https://eu.docworkspace.com/d/sbOaerfHZ6BNgTxh_ifkxyvk5ijg1mf0dub?sa=601.1074",
+    "category": "personal"
+  },
+  {
+    "id": 49,
+    "title": "Stalled by Design: How Weak Education Systems and Limited Innovation Ecosystems Constrain Ethiopia's Development",
+    "author": "Henok Netsanet",
+    "link": "https://drive.google.com/file/d/1KnGD3CgVl3R6VNajKRR3hZKO8CSjASY9/view?usp=sharing",
+    "category": "education"
+  },
+  {
+    "id": 50,
+    "title": "\"Digital Ethiopia\", but are the people ready?",
+    "author": "someoneinahoodie",
+    "link": "https://docs.google.com/document/d/1BM3WB5m_jnjrII6zSpkeYscnCXHUXrYRHmBNy3a5vuE/edit?usp=drivesdk",
+    "category": "energy"
+  },
+  {
+    "id": 51,
+    "title": "What if the real problem has never been the students",
+    "author": "Ruhama Gemechu",
+    "link": "https://docs.google.com/document/d/1mZEc8Mv9ItCpaoAx94az2EFsVftlUvPhQpCje3nhEWo/edit?usp=sharing",
+    "category": "education"
+  },
+  {
+    "id": 52,
+    "title": "Works in Education, Fails in Production",
+    "author": "Selamawit",
+    "link": "https://drive.google.com/file/d/1rBqFyjXXdmbDTomepmpa_2ZaVlQavd9J/view?usp=sharing",
+    "category": "education"
+  },
+  {
+    "id": 53,
+    "title": "Scarcity as a Business Model",
+    "author": "Samrawit Kahsay",
+    "link": "https://open.substack.com/pub/vvitt/p/scarcity-as-a-business-model?utm_campaign=post-expanded-share&utm_medium=web",
+    "category": "agriculture"
+  },
+  {
+    "id": 54,
+    "title": "Boarding Schools and the Compression of Student Potential in Oromia",
+    "author": "Olif Tadele",
+    "link": "https://docs.google.com/document/d/10f-8jM-7ufNY2uCEbP5PYzgNMuD7sTJKAXWTJG5W4Cg/edit?usp=sharing",
+    "category": "education"
+  },
+  {
+    "id": 56,
+    "title": "When Technology Arrives Before the User: Why Ethiopia’s Digital Progress Has Not Fully Landed",
+    "author": "Edilawit Wubishet",
+    "link": "https://docs.google.com/document/d/10MGjaJrpkp_AVOXZlnCqQQu9cSsXkk-qIdpF9WVwKaI/edit?usp=sharing",
+    "category": "energy"
+  },
+  {
+    "id": 57,
+    "title": "Broken Systems, Blamed Farmers: Irrigation Reliability, Market Design, and the Politics of Accountability in Ethiopia",
+    "author": "Surafel Yimam Kebede",
+    "link": "https://docs.google.com/document/d/1lyQBHnuKASV17N6nj_4fPAUZKlr5Me5IMWDrelW3g-8/edit?usp=sharing",
+    "category": "agriculture"
+  },
+  {
+    "id": 58,
+    "title": "Between Tradition and Critique: The Contradictory Gaze of  Diaspora Intellectuals",
+    "author": "Deborah Theodros",
+    "link": "https://docs.google.com/document/d/1VSzs63p9sdwX_gsJvIIizg85FJidtDtgJOGNzVBA__A/edit?usp=sharing",
+    "category": "society"
+  },
+  {
+    "id": 59,
+    "title": "The Feature Phone Market: Unbundling the Ethiopian Middleman",
+    "author": "Behailu Berhanu",
+    "link": "https://overdueprogress-behailu.netlify.app/",
+    "category": "agriculture"
+  },
+  {
+    "id": 60,
+    "title": "Culture: The Foundation of Progress",
+    "author": "Abel Berhanu",
+    "link": "https://medium.com/@berhanuabel79/culture-is-the-key-dd7227614082",
+    "category": "society"
+  },
+  {
+    "id": 61,
+    "title": "Foreign Exchange as Allocation Infrastructure: Why Ethiopia’s Industrial Constraint Is Not a Price Problem",
+    "author": "Henok Hankore",
+    "link": "https://docs.google.com/document/d/1m6yozfildbfEuMfTlqHZ0VnNVFUAWuxsxeGS1T3j038/edit?usp=drivesdk",
+    "category": "money"
+  },
+  {
+    "id": 62,
+    "title": "“እናት ዳቦ ግዢልኝ?”",
+    "author": "Biruktawit Yaze",
+    "link": "https://docs.google.com/document/d/11OpCA1uP7dFxbQa74cde58sFYay3_4OXndEqPvTV6BA/edit?usp=sharing",
+    "category": "society"
+  },
+  {
+    "id": 63,
+    "title": "145 Million Appetites",
+    "author": "Abel Kinde Tesfa",
+    "link": "https://open.substack.com/pub/iabela/p/145-million-appetites?utm_source=share&utm_medium=android&r=1lleyq",
+    "category": "agriculture"
+  },
+  {
+    "id": 64,
+    "title": "Rationed by Auction: Why Ethiopia's Forex System Still Starves Manufacturers",
+    "author": "Mikiyas Dawit",
+    "link": "https://open.substack.com/pub/leoscared/p/rationed-by-auction-why-ethiopias?utm_campaign=post-expanded-share&utm_medium=web",
+    "category": "money"
+  },
+  {
+    "id": 65,
+    "title": "How Ethiopian Investment Holdings Can Replicate Ethiopian Electric Utility’s Profitability Across State-Owned Enterprises",
+    "author": "Shahon Gezahegne Gebre",
+    "link": "https://medium.com/@shahongebre/how-ethiopian-investment-holdings-can-replicate-ethiopian-electric-utilitys-profitability-across-e43227dfd1d0",
+    "category": "state"
+  },
+  {
+    "id": 66,
+    "title": "Ethiopia needs better boyfriends more than it needs better roads",
+    "author": "Kalkidan Manalegn",
+    "link": "https://medium.com/@rih_a1/bfd05b24c983",
+    "category": "society"
+  },
+  {
+    "id": 67,
+    "title": "A Lottery in Slow Motion: Housing and Delayed Progress in Addis Ababa",
+    "author": "Hawi Demoz",
+    "link": "https://my-essay.vercel.app/",
+    "category": "cities"
+  },
+  {
+    "id": 68,
+    "title": "Building a Nation",
+    "author": "SheepOftheShepherd",
+    "link": "https://docs.google.com/document/d/1Bg1Q8drFaedZ4Gv7PFZS81YWTuvoE2xQa9IMmr4aaNk/edit?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 69,
+    "title": "How Ethiopian Cities Actually Work",
+    "author": "Yabsra Gebretsadik",
+    "link": "https://drive.google.com/file/d/1Lw5xya_KO4kATT9_vVzwPP4pyi5W9DK6/view?usp=sharing",
+    "category": "cities"
+  },
+  {
+    "id": 71,
+    "title": "Progress Overdue in Ethiopia’s Tax System",
+    "author": "Eyuel Kebede Zegeye (DHH)",
+    "link": "https://medium.com/@eyuduc/progress-overdue-in-ethiopias-tax-system-1c8102e5e78a",
+    "category": "state"
+  },
+  {
+    "id": 72,
+    "title": "Beyond the Technical Fix: Institutional Depth and the Future of  Economic Reforms in Ethiopia",
+    "author": "Aser Alemu",
+    "link": "https://drive.google.com/file/d/1MuYL6qa1Js3urqp_qFrZ8xVV5_3NQpdp/view?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 73,
+    "title": "Africa’s Missing Market",
+    "author": "dawit tadesse",
+    "link": "https://docs.google.com/document/d/1pWffAJwmvYgR3pJODKan-tIi3j6KIpw4MZL1MJPOkYA/edit?usp=sharing",
+    "category": "africa"
+  },
+  {
+    "id": 74,
+    "title": "The Economics of Showing Up",
+    "author": "yewe",
+    "link": "https://yewe.work/blog/economics-of-showing-up",
+    "category": "state"
+  },
+  {
+    "id": 75,
+    "title": "What Adwa Proved About Ethiopian Governance and What We Unlearned",
+    "author": "Yeabsira Fikre",
+    "link": "https://docs.google.com/document/d/14qwE7t17q2GPTnb8Emg98bIMXSexAa1SXwrf-cNE1X0/edit?usp=sharing",
+    "category": "society"
+  },
+  {
+    "id": 77,
+    "title": "The Broken Import System and the Misunderstood Market",
+    "author": "Abdeljelil Behredin",
+    "link": "https://medium.com/@aldricrealm/the-broken-import-system-and-the-misunderstood-market-f6085fa049a9",
+    "category": "money"
+  },
+  {
+    "id": 78,
+    "title": "Addis Ababa’s Water Progress Trap",
+    "author": "Eyosias Samson",
+    "link": "https://www.eyosias.dev/blog/addis-ababas-water-progress-trap",
+    "category": "cities"
+  },
+  {
+    "id": 79,
+    "title": "Are we Empowering Women or just helping them cope?",
+    "author": "Dina Fikru",
+    "link": "https://overduewomenprogress.vercel.app/",
+    "category": "society"
+  },
+  {
+    "id": 80,
+    "title": "The Waiting Economy: How Time Became Ethiopia’s Hidden Currency",
+    "author": "Amira Abdurahman",
+    "link": "https://drive.google.com/file/d/1Q4Kaxy6V0WRLNke-TbDDmhnGKUW90WAJ/view?usp=sharing",
+    "category": "state"
+  },
+  {
+    "id": 81,
+    "title": "How Crippled Ethiopia Is: A Look into Transportation and Logistics in Ethiopia",
+    "author": "Abiy Yifrashewa Tadesse",
+    "link": "https://docs.google.com/document/d/11AL8pjhGZvMIPJ_n5J46WiESmVCxpZl5bM7z41oYLzk/edit?usp=sharing",
+    "category": "cities"
+  },
+  {
+    "id": 82,
+    "title": "Progress for the Sake of Progress",
+    "author": "Manasseh Samuel",
+    "link": "https://manassehsamuel.substack.com/p/progress-for-the-sake-of-progress",
+    "category": "personal"
+  },
+  {
+    "id": 84,
+    "title": "From Red Terror to Bureaucracy: Why Ethiopia’s Best Minds Still Leave",
+    "author": "Abigail Tarekegn Assefa",
+    "link": "https://open.substack.com/pub/cheesiercheese/p/from-red-terror-to-bureaucracy-why?r=696dqj&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true",
+    "category": "education"
+  },
+  {
+    "id": 86,
+    "title": "On The Chain That Decides The Plate",
+    "author": "Eldad A.M.",
+    "link": "https://telegra.ph/On-The-Chain-That-Decides-The-Plate-04-26",
+    "category": "agriculture"
+  },
+  {
+    "id": 87,
+    "title": "The death of patriotism",
+    "author": "Dawit D.",
+    "link": "https://medium.com/@ddemeke48/the-death-of-patriotism-e8481c1ce4d6",
+    "category": "society"
+  },
+  {
+    "id": 88,
+    "title": "The Postal-Office Machine: How Ethiopia’s Postal System Became an Invisible Engine of Urban Inflation",
+    "author": "yeabsera sisay",
+    "link": "https://docs.google.com/document/d/1ByUge0tIX15Z_fW6J7r-YoPKdH2ehnbEijNhfuf8qo8/edit?usp=sharing",
+    "category": "cities"
+  },
+  {
+    "id": 89,
+    "title": "The Agent’s Drawer: Ethiopia’s Real Mobile Money Test",
+    "author": "Lisanegberiel Abay",
+    "link": "https://docs.google.com/document/d/1xg59YclY73HhPEAzKtmykwHByoT-A6_GDumMl5pVMqg/edit?usp=sharing",
+    "category": "money"
+  },
+  {
+    "id": 90,
+    "title": "Organic Continent",
+    "author": "Vera. M",
+    "link": "https://1drv.ms/w/c/c1482289a3686769/IQCvbwsOod34Q6UNYqRNn5GwAUWDvpp_kTzF1krgpFohM1w?e=2lCcLF",
+    "category": "africa"
+  }
+]
