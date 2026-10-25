@@ -18,13 +18,7 @@ pkgs.treefmt.withConfig {
   ];
   settings = {
     on-unmatched = "info";
-    global.excludes = [
-      ".sqlx/*"
-      "views/*"
-      "static/*"
-      "migrations/*"
-      "pnpm-lock.yaml"
-    ];
+    global.excludes = [ "pnpm-lock.yaml" ];
     formatter.nixfmt = {
       command = "nixfmt";
       includes = [ "*.nix" ];

@@ -1,5 +1,4 @@
 .direnv
-/target
 *.db
 *.db-journal
 *.db-shm

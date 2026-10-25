@@ -1,13 +1,6 @@
 dist
 node_modules
 .astro
+.wrangler
 pnpm-lock.yaml
-target
-views
-static
 hosts
-modules
-packages
-.sqlx
-migrations
-scripts

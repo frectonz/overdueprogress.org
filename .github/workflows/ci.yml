@@ -8,9 +8,6 @@ on:
     branches:
       - main
 
-env:
-  SQLX_OFFLINE: "true"
-
 jobs:
   site:
     runs-on: ubuntu-latest
@@ -31,7 +28,7 @@ jobs:
       - name: Build Site
         run: nix develop -c pnpm build
 
-  server:
+  flake:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -40,15 +37,3 @@ jobs:
 
       - name: Run Flake Check
         run: nix flake check
-
-      - name: Check Rust Formatting
-        run: nix develop -c cargo fmt --check
-
-      - name: Run Rust Clippy
-        run: nix develop -c cargo clippy --all-targets -- -D warnings
-
-      - name: Run Rust Tests
-        run: nix develop -c cargo test
-
-      - name: Build Rust Project
-        run: nix develop -c cargo build --release

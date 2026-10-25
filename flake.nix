@@ -18,15 +18,11 @@
 
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
-
-    rust-overlay.url = "github:oxalica/rust-overlay";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
     inputs:
     inputs.blueprint {
       inherit inputs;
-      nixpkgs.overlays = [ (import inputs.rust-overlay) ];
     };
 }

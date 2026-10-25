@@ -3,8 +3,6 @@
   ...
 }:
 let
-  rust = pkgs.rust-bin.stable.latest.default;
-
   vars = import ./hosts/op/variables.nix;
   target = "root@${vars.sshHost}";
 
@@ -57,12 +55,6 @@ pkgs.mkShellNoCC {
   packages = [
     pkgs.nodejs
     pkgs.pnpm
-    rust
-    pkgs.sqlx-cli
-    pkgs.sqlite
-    pkgs.pkg-config
-    pkgs.openssl
-    pkgs.rust-analyzer
 
     pkgs.nixos-rebuild
     pkgs.nixos-anywhere
@@ -78,7 +70,6 @@ pkgs.mkShellNoCC {
   ];
 
   shellHook = ''
-    export DATABASE_URL="sqlite://$PWD/submissions.db"
     export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
   '';
 }
