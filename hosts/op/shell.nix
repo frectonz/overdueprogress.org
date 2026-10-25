@@ -12,8 +12,6 @@
     shellAbbrs = {
       lg = "lazygit";
       stat = "git status";
-      logs = "journalctl -u overdueprogress -f";
-      tail-caddy = "journalctl -u caddy -f";
     };
   };
 

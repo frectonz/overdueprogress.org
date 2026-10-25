@@ -6,12 +6,7 @@
 {
   imports = [
     flake.nixosModules.server
-    flake.nixosModules.overdueprogress
-    ./alerts.nix
-    ./app.nix
-    ./backups.nix
     ./boot.nix
-    ./caddy.nix
     ./disko.nix
     ./locale.nix
     ./networking.nix
